@@ -9,7 +9,7 @@
   <img src="https://img.shields.io/badge/.NET%208-blueviolet?logo=dotnet&style=flat-square" />
   <img src="https://img.shields.io/badge/Architecture-Clean-informational?style=flat-square" />
   <img src="https://img.shields.io/badge/Deployed%20with-Docker-blue?logo=docker&style=flat-square" />
-  <img src="https://img.shields.io/github/license/your-username/fixmate?style=flat-square" />
+  <img src="https://img.shields.io/github/license/abdullahsherdy/FixMate?style=flat-square" />
 </div>
 
 ---
