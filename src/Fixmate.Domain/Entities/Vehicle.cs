@@ -12,7 +12,7 @@ namespace FixMate.Domain.Entities
         public string Make { get; set; }          // Toyota, Honda
         public string Model { get; set; }         // Camry, Civic
         public string Type { get; set; }          // Car, Bike
-        public Lisce LicensePlate { get; set; }
+        public LicensePlate LicensePlate { get; set; }
         public Guid UserId { get; set; }
         public User Owner { get; set; }
     }
