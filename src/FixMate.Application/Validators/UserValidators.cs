@@ -12,13 +12,6 @@ namespace FixMate.Application.Validators
                 .EmailAddress()
                 .MaximumLength(100);
 
-            RuleFor(x => x.FirstName)
-                .NotEmpty()
-                .MaximumLength(50);
-
-            RuleFor(x => x.LastName)
-                .NotEmpty()
-                .MaximumLength(50);
 
             RuleFor(x => x.PhoneNumber)
                 .NotEmpty()

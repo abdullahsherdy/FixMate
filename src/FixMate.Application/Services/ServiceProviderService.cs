@@ -237,31 +237,7 @@ namespace FixMate.Application.Services
             }
         }
 
-        public async Task<bool> UpdateAvailabilityAsync(Guid providerId, UpdateAvailabilityDto availabilityDto)
-        {
-            if (providerId == Guid.Empty)
-                throw new ArgumentException("Invalid service provider ID", nameof(providerId));
-            if (availabilityDto == null)
-                throw new ArgumentNullException(nameof(availabilityDto));
 
-            try
-            {
-                var provider = await _serviceProviderRepository.GetByIdAsync(providerId);
-                if (provider == null)
-                    throw new ArgumentException("Service provider not found", nameof(providerId));
-
-                provider.IsAvailable = availabilityDto.IsAvailable;
-                _serviceProviderRepository.Update(provider);
-                await _unitOfWork.SaveChangesAsync();
-
-                return true;
-            }
-            catch (Exception ex)
-            {
-                _logger.LogError(ex, "Error occurred while updating availability for provider {ProviderId}", providerId);
-                throw;
-            }
-        }
 
         private static ServiceProviderDto MapToDto(ServiceProvider provider)
         {
@@ -278,5 +254,8 @@ namespace FixMate.Application.Services
                 IsAvailable = provider.IsAvailable
             };
         }
+
+
+
     }
 } 

@@ -5,7 +5,7 @@ using Microsoft.IdentityModel.Tokens;
 using Microsoft.OpenApi.Models;
 using Serilog;
 using FixMate.Infrastructure.Persistence;
-using FixMate.Web.Configuration;
+using FixMate.Application.Configuration;
 using FixMate.Application.Interfaces.Services;
 using FixMate.Application.Services;
 using FixMate.Application.Interfaces.Persistence;
@@ -20,7 +20,7 @@ builder.Services.AddControllers();
 
 // Configure strongly typed settings
 var appSettings = builder.Configuration.Get<AppSettings>();
-builder.Services.AddSingleton(appSettings);
+builder.Services.Configure<AppSettings>(builder.Configuration);
 
 // Configure DbContext
 builder.Services.AddDbContext<FixMateDbContext>(options =>
@@ -75,6 +75,7 @@ builder.Services.AddScoped<IVehicleService, VehicleService>();
 builder.Services.AddScoped<IServiceRequestService, ServiceRequestService>();
 builder.Services.AddScoped<IServiceProviderService, ServiceProviderService>();
 builder.Services.AddScoped<IAuthService, AuthService>();
+builder.Services.AddScoped<IJwtService, JwtService>();
 
 // Register repositories
 builder.Services.AddScoped<IUserRepository, UserRepository>();

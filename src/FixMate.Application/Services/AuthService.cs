@@ -16,6 +16,10 @@ using System.ComponentModel.DataAnnotations;
 
 namespace FixMate.Application.Services
 {
+    /// <summary>
+    ///  This Service knows only about interface, which declared in application layer
+    ///  in DI registration we register Repos as <Interface, Imp>, regardless of this we still respect clean arch principles 
+    /// </summary>
     public class AuthService : IAuthService
     {
         private readonly IUserRepository _userRepository;
@@ -35,20 +39,26 @@ namespace FixMate.Application.Services
             _logger = logger ?? throw new ArgumentNullException(nameof(logger));
         }
 
-        public async Task<UserDto> ValidateUserAsync(LoginRequest request)
+        public async Task<UserDto> ValidateUserAsync(string email, string password)
         {
-            if (request == null)
-                throw new ArgumentNullException(nameof(request));
-
+            if (string.IsNullOrEmpty(email) || string.IsNullOrEmpty(password))
+                throw new ArgumentException("Email and password cannot be null or empty");
+            
+            var request = new LoginRequest
+            {
+                Email = email,
+                Password = password
+            };
+           
             ValidateRequest(request);
 
             try
             {
-                var user = await _userRepository.GetByEmailAsync(request.Email);
+                var user = await _userRepository.GetByEmailAsync(email);
                 if (user == null)
                     return null;
 
-                if (!BCrypt.Net.BCrypt.Verify(request.Password, user.PasswordHash))
+                if (!BCrypt.Net.BCrypt.Verify(password, user.PasswordHash))
                     return null;
 
                 user.LastLoginAt = DateTime.UtcNow;
@@ -107,6 +117,7 @@ namespace FixMate.Application.Services
         {
             if (userId == Guid.Empty)
                 throw new ArgumentException("Invalid user ID", nameof(userId));
+           
             if (request == null)
                 throw new ArgumentNullException(nameof(request));
 
@@ -165,6 +176,26 @@ namespace FixMate.Application.Services
             }
         }
 
+        public async Task<UserDto> GetUserByIdAsync(Guid userId)
+        {
+            if (userId == Guid.Empty)
+                throw new ArgumentException("Invalid user ID", nameof(userId));
+
+            try
+            {
+                var user = await _userRepository.GetByIdAsync(userId);
+                if (user == null)
+                    throw new ArgumentException("User not found", nameof(userId));
+
+                return MapToDto(user);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error occurred while getting user {UserId}", userId);
+                throw;
+            }
+        }
+
         private static UserDto MapToDto(User user)
         {
             if (user == null)
@@ -183,6 +214,16 @@ namespace FixMate.Application.Services
             };
         }
 
+        /// <summary>
+        ///  its purpose is to achieve a set of software engineering principles 
+        ///  DRY (Don't Repeat Yourself) and KISS (Keep It Simple, Stupid).
+        ///  Consistency in validation logic across the application.
+        ///  Maintainability and readability of the code.
+        ///  Error handling and logging.
+        ///  performance and efficiency.
+        /// </summary>
+        /// <param name="request"></param>
+        /// <exception cref="ValidationException"></exception>
         private static void ValidateRequest(object request)
         {
             var validationContext = new ValidationContext(request);
@@ -192,31 +233,6 @@ namespace FixMate.Application.Services
                 var errors = string.Join(", ", validationResults.Select(r => r.ErrorMessage));
                 throw new ValidationException($"Validation failed: {errors}");
             }
-        }
-
-        private string GenerateJwtToken(User user)
-        {
-            var tokenHandler = new JwtSecurityTokenHandler();
-            var key = Encoding.ASCII.GetBytes(_configuration["Jwt:Key"]);
-            var tokenDescriptor = new SecurityTokenDescriptor
-            {
-                Subject = new ClaimsIdentity(new[]
-                {
-                    new Claim(ClaimTypes.NameIdentifier, user.Id.ToString()),
-                    new Claim(ClaimTypes.Email, user.Email),
-                    new Claim(ClaimTypes.Name, user.FullName),
-                    new Claim(ClaimTypes.Role, user.Role.ToString())
-                }),
-                Expires = DateTime.UtcNow.AddDays(7),
-                SigningCredentials = new SigningCredentials(
-                    new SymmetricSecurityKey(key),
-                    SecurityAlgorithms.HmacSha256Signature),
-                Issuer = _configuration["Jwt:Issuer"],
-                Audience = _configuration["Jwt:Audience"]
-            };
-
-            var token = tokenHandler.CreateToken(tokenDescriptor);
-            return tokenHandler.WriteToken(token);
         }
     }
 } 

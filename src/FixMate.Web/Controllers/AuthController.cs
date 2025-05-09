@@ -9,7 +9,9 @@ using Microsoft.Extensions.Options;
 using Microsoft.IdentityModel.Tokens;
 using FixMate.Application.DTOs;
 using FixMate.Application.Interfaces.Services;
-using FixMate.Web.Configuration;
+using FixMate.Application.Configuration;
+using Microsoft.Extensions.Logging;
+
 namespace FixMate.Web.Controllers
 {
     [ApiController]
@@ -17,66 +19,86 @@ namespace FixMate.Web.Controllers
     public class AuthController : ControllerBase
     {
         private readonly IAuthService _authService;
-        private readonly IUserService _userService;
-        private readonly AppSettings _appSettings;
+        private readonly IJwtService _jwtService;
+        private readonly ILogger<AuthController> _logger;
 
         public AuthController(
             IAuthService authService,
-            IUserService userService,
-            IOptions<AppSettings> appSettings)
+            IJwtService jwtService,
+            ILogger<AuthController> logger)
         {
-            _authService = authService;
-            _userService = userService;
-            _appSettings = appSettings.Value;
+            _authService = authService ?? throw new ArgumentNullException(nameof(authService));
+            _jwtService = jwtService ?? throw new ArgumentNullException(nameof(jwtService));
+            _logger = logger ?? throw new ArgumentNullException(nameof(logger));
         }
 
         [HttpPost("login")]
         public async Task<ActionResult<AuthResponse>> Login(LoginRequest request)
         {
-            var user = await _authService.ValidateUserAsync(request.Email, request.Password);
-            if (user == null)
-                return Unauthorized(new { message = "Invalid email or password" });
+            try
+            {
+                var user = await _authService.ValidateUserAsync(request.Email, request.Password);
+                if (user == null)
+                    return Unauthorized(new { message = "Invalid email or password" });
 
-            var token = GenerateJwtToken(user);
-            return Ok(new AuthResponse { Token = token });
+                var token = _jwtService.GenerateToken(user);
+                return Ok(new AuthResponse { Token = token });
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error occurred during login for user {Email}", request.Email);
+                return StatusCode(500, new { message = "An error occurred during login" });
+            }
         }
 
         [HttpPost("register")]
         public async Task<ActionResult<AuthResponse>> Register(RegisterRequest request)
         {
-            var R = new RegisterRequest
+            try
             {
-                Email = request.Email,
-                Password = request.Password,
-                FirstName = request.FirstName,
-                LastName = request.LastName,
-                PhoneNumber = request.PhoneNumber
-            };
-            var user = await _authService.RegisterUserAsync(R);
-            if (user == null)
-                return BadRequest(new { message = "User registration failed" });
+                var user = await _authService.RegisterUserAsync(request);
+                if (user == null)
+                    return BadRequest(new { message = "User registration failed" });
 
-            var token = GenerateJwtToken(user);
-            return Ok(new AuthResponse { Token = token });
+                var token = _jwtService.GenerateToken(user);
+                return Ok(new AuthResponse { Token = token });
+            }
+            catch (InvalidOperationException ex)
+            {
+                return BadRequest(new { message = ex.Message });
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error occurred during registration for user {Email}", request.Email);
+                return StatusCode(500, new { message = "An error occurred during registration" });
+            }
         }
 
         [Authorize]
         [HttpPost("change-password")]
-        public async Task<IActionResult> ChangePassword(ChangePasswordRequest request)
+        public async Task<ActionResult<AuthResponse>> ChangePassword(ChangePasswordRequest request)
         {
-            var userId = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
-            if (string.IsNullOrEmpty(userId))
-                return Unauthorized();
+            try
+            {
+                var userId = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+                if (string.IsNullOrEmpty(userId))
+                    return Unauthorized(new { message = "User not authenticated" });
 
-            var success = await _authService.ChangePasswordAsync(
-                Guid.Parse(userId),
-                request.CurrentPassword,
-                request.NewPassword);
+                var success = await _authService.ChangePasswordAsync(Guid.Parse(userId), request);
+                if (!success)
+                    return BadRequest(new { message = "Password change failed" });
 
-            if (!success)
-                return BadRequest(new { message = "Password change failed" });
+                // Get updated user to generate new token
+                var user = await _authService.GetUserByIdAsync(Guid.Parse(userId));
+                var token = _jwtService.GenerateToken(user);
 
-            return Ok(new { message = "Password changed successfully" });
+                return Ok(new AuthResponse { Token = token });
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error occurred during password change for user {UserId}", User.FindFirst(ClaimTypes.NameIdentifier)?.Value);
+                return StatusCode(500, new { message = "An error occurred during password change" });
+            }
         }
 
         private string GenerateJwtToken(UserDto user)
@@ -89,8 +111,8 @@ namespace FixMate.Web.Controllers
                 {
                     new Claim(ClaimTypes.NameIdentifier, user.Id.ToString()),
                     new Claim(ClaimTypes.Email, user.Email),
-                    new Claim(ClaimTypes.Name, $"{user.FirstName} {user.LastName}"),
-                    new Claim(ClaimTypes.Role, "User") // Add roles from user.UserRoles
+                    new Claim(ClaimTypes.Name, user.FullName),
+                    new Claim(ClaimTypes.Role, user.Role.Name) // Add roles from user.UserRoles
                 }),
                 Expires = DateTime.UtcNow.AddDays(_appSettings.Jwt.ExpiryInDays),
                 SigningCredentials = new SigningCredentials(
@@ -103,31 +125,5 @@ namespace FixMate.Web.Controllers
             var token = tokenHandler.CreateToken(tokenDescriptor);
             return tokenHandler.WriteToken(token);
         }
-    }
-
-    public class AuthResponse
-    {
-        public string Token { get; set; }
-    }
-
-    public class LoginRequest
-    {
-        public string Email { get; set; }
-        public string Password { get; set; }
-    }
-
-    public class RegisterRequest
-    {
-        public string Email { get; set; }
-        public string Password { get; set; }
-        public string FirstName { get; set; }
-        public string LastName { get; set; }
-        public string PhoneNumber { get; set; }
-    }
-
-    public class ChangePasswordRequest
-    {
-        public string CurrentPassword { get; set; }
-        public string NewPassword { get; set; }
     }
 } 

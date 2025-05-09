@@ -27,7 +27,7 @@ namespace FixMate.Application.Services
             _logger = logger ?? throw new ArgumentNullException(nameof(logger));
         }
 
-        public async Task<UserDto> CreateUserAsync(CreateUserDto userDto)
+        public async Task<UserDto> CreateUserAsync(UserDto userDto)
         {
             if (userDto == null)
                 throw new ArgumentNullException(nameof(userDto));
