@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.ComponentModel.DataAnnotations;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
@@ -9,16 +10,13 @@ namespace FixMate.Domain.Entities
 {
     public class ServiceRequest
     {
+        [Key]
         public Guid Id { get; set; }
         public Guid VehicleId { get; set; }
         public Vehicle Vehicle { get; set; }
-
-        public Guid ServiceTypeId { get; set; }
-        public ServiceType ServiceType { get; set; }
-
+        public ServiceType ServiceType { get; set; } // Oil Change, Battery Check
         public Guid? AssignedProviderId { get; set; }
         public ServiceProvider AssignedProvider { get; set; }
-
         public ServiceStatus Status { get; set; }
         public string Notes { get; set; }
         public DateTime RequestedAt { get; set; }

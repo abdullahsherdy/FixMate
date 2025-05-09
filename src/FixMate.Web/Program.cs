@@ -1,36 +1,182 @@
+using System.Text;
+using Microsoft.AspNetCore.Authentication.JwtBearer;
+using Microsoft.EntityFrameworkCore;
+using Microsoft.IdentityModel.Tokens;
+using Microsoft.OpenApi.Models;
+using Serilog;
+using FixMate.Infrastructure.Persistence;
+using FixMate.Web.Configuration;
+using FixMate.Application.Interfaces.Services;
+using FixMate.Application.Services;
+using FixMate.Application.Interfaces.Persistence;
+using FixMate.Infrastructure.Persistence.Repositories;
+using FluentValidation;
+using FluentValidation.AspNetCore;
 
-namespace FixMate.Web
-{
-    public class Program
+var builder = WebApplication.CreateBuilder(args);
+
+// Add services to the container.
+builder.Services.AddControllers();
+
+// Configure strongly typed settings
+var appSettings = builder.Configuration.Get<AppSettings>();
+builder.Services.AddSingleton(appSettings);
+
+// Configure DbContext
+builder.Services.AddDbContext<FixMateDbContext>(options =>
+    options.UseSqlServer(appSettings.ConnectionStrings.DefaultConnection));
+
+// Configure JWT Authentication
+builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
+    .AddJwtBearer(options =>
     {
-        public static void Main(string[] args)
+        options.TokenValidationParameters = new TokenValidationParameters
         {
-            var builder = WebApplication.CreateBuilder(args);
+            ValidateIssuer = true,
+            ValidateAudience = true,
+            ValidateLifetime = true,
+            ValidateIssuerSigningKey = true,
+            ValidIssuer = appSettings.Jwt.Issuer,
+            ValidAudience = appSettings.Jwt.Audience,
+            IssuerSigningKey = new SymmetricSecurityKey(
+                Encoding.UTF8.GetBytes(appSettings.Jwt.Key))
+        };
+    });
 
-            // Add services to the container.
+// Configure Authorization
+builder.Services.AddAuthorization(options =>
+{
+    options.AddPolicy("RequireAdminRole", policy =>
+        policy.RequireRole("Admin"));
+});
 
-            builder.Services.AddControllers();
-            // Learn more about configuring Swagger/OpenAPI at https://aka.ms/aspnetcore/swashbuckle
-            builder.Services.AddEndpointsApiExplorer();
-            builder.Services.AddSwaggerGen();
+// Configure CORS
+builder.Services.AddCors(options =>
+{
+    options.AddPolicy("AllowSpecificOrigins",
+        builder =>
+        {
+            builder.WithOrigins(appSettings.Cors.AllowedOrigins.ToArray())
+                   .AllowAnyMethod()
+                   .AllowAnyHeader();
+        });
+});
 
-            var app = builder.Build();
+// Configure Serilog
+Log.Logger = new LoggerConfiguration()
+    .ReadFrom.Configuration(builder.Configuration)
+    .CreateLogger();
+builder.Host.UseSerilog();
 
-            // Configure the HTTP request pipeline.
-            if (app.Environment.IsDevelopment())
+// Register services
+builder.Services.AddScoped<IUnitOfWork, UnitOfWork>();
+builder.Services.AddScoped<IUserService, UserService>();
+builder.Services.AddScoped<IVehicleService, VehicleService>();
+builder.Services.AddScoped<IServiceRequestService, ServiceRequestService>();
+builder.Services.AddScoped<IServiceProviderService, ServiceProviderService>();
+builder.Services.AddScoped<IAuthService, AuthService>();
+
+// Register repositories
+builder.Services.AddScoped<IUserRepository, UserRepository>();
+builder.Services.AddScoped<IVehicleRepository, VehicleRepository>();
+builder.Services.AddScoped<IServiceRequestRepository, ServiceRequestRepository>();
+builder.Services.AddScoped<IServiceProviderRepository, ServiceProviderRepository>();
+
+// Register validators
+builder.Services.AddScoped<IValidator<LoginRequest>, LoginRequestValidator>();
+builder.Services.AddScoped<IValidator<RegisterRequest>, RegisterRequestValidator>();
+builder.Services.AddScoped<IValidator<ChangePasswordRequest>, ChangePasswordRequestValidator>();
+builder.Services.AddScoped<IValidator<UserDto>, UserDtoValidator>();
+builder.Services.AddScoped<IValidator<CreateUserDto>, CreateUserDtoValidator>();
+builder.Services.AddScoped<IValidator<UpdateUserDto>, UpdateUserDtoValidator>();
+builder.Services.AddScoped<IValidator<VehicleDto>, VehicleDtoValidator>();
+builder.Services.AddScoped<IValidator<CreateVehicleDto>, CreateVehicleDtoValidator>();
+builder.Services.AddScoped<IValidator<UpdateVehicleDto>, UpdateVehicleDtoValidator>();
+builder.Services.AddScoped<IValidator<ServiceRequestDto>, ServiceRequestDtoValidator>();
+builder.Services.AddScoped<IValidator<CreateServiceRequestDto>, CreateServiceRequestDtoValidator>();
+builder.Services.AddScoped<IValidator<UpdateServiceRequestDto>, UpdateServiceRequestDtoValidator>();
+builder.Services.AddScoped<IValidator<AssignServiceProviderDto>, AssignServiceProviderDtoValidator>();
+builder.Services.AddScoped<IValidator<UpdateServiceStatusDto>, UpdateServiceStatusDtoValidator>();
+builder.Services.AddScoped<IValidator<ServiceProviderDto>, ServiceProviderDtoValidator>();
+builder.Services.AddScoped<IValidator<CreateServiceProviderDto>, CreateServiceProviderDtoValidator>();
+builder.Services.AddScoped<IValidator<UpdateServiceProviderDto>, UpdateServiceProviderDtoValidator>();
+builder.Services.AddScoped<IValidator<UpdateAvailabilityDto>, UpdateAvailabilityDtoValidator>();
+
+// Add FluentValidation
+builder.Services.AddFluentValidationAutoValidation();
+builder.Services.AddValidatorsFromAssemblyContaining<LoginRequestValidator>();
+
+// Configure Swagger
+builder.Services.AddEndpointsApiExplorer();
+builder.Services.AddSwaggerGen(c =>
+{
+    c.SwaggerDoc("v1", new OpenApiInfo { Title = "FixMate API", Version = "v1" });
+    
+    // Add JWT Authentication to Swagger
+    c.AddSecurityDefinition("Bearer", new OpenApiSecurityScheme
+    {
+        Description = "JWT Authorization header using the Bearer scheme",
+        Name = "Authorization",
+        In = ParameterLocation.Header,
+        Type = SecuritySchemeType.ApiKey,
+        Scheme = "Bearer"
+    });
+
+    c.AddSecurityRequirement(new OpenApiSecurityRequirement
+    {
+        {
+            new OpenApiSecurityScheme
             {
-                app.UseSwagger();
-                app.UseSwaggerUI();
-            }
-
-            app.UseHttpsRedirection();
-
-            app.UseAuthorization();
-
-
-            app.MapControllers();
-
-            app.Run();
+                Reference = new OpenApiReference
+                {
+                    Type = ReferenceType.SecurityScheme,
+                    Id = "Bearer"
+                }
+            },
+            Array.Empty<string>()
         }
+    });
+});
+
+var app = builder.Build();
+
+// Configure the HTTP request pipeline.
+if (app.Environment.IsDevelopment())
+{
+    app.UseSwagger();
+    app.UseSwaggerUI();
+}
+
+app.UseHttpsRedirection();
+app.UseCors("AllowSpecificOrigins");
+app.UseAuthentication();
+app.UseAuthorization();
+app.MapControllers();
+
+// Use global exception handler
+app.UseMiddleware<GlobalExceptionHandler>();
+
+// Apply database migrations and seed data
+using (var scope = app.Services.CreateScope())
+{
+    var services = scope.ServiceProvider;
+    try
+    {
+        var context = services.GetRequiredService<FixMateDbContext>();
+        context.Database.Migrate();
+
+        // Seed database
+        var seeder = services.GetRequiredService<DatabaseSeeder>();
+        await seeder.SeedAsync();
+    }
+    catch (Exception ex)
+    {
+        var logger = services.GetRequiredService<ILogger<Program>>();
+        logger.LogError(ex, "An error occurred while migrating or seeding the database.");
     }
 }
+
+// Register DatabaseSeeder
+builder.Services.AddScoped<DatabaseSeeder>();
+
+app.Run();

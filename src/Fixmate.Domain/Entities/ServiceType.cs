@@ -7,11 +7,26 @@ using FixMate.Domain.Enums;
 
 namespace FixMate.Domain.Entities
 {
-    public class ServiceType
+    //public class ServiceType
+    //{
+    //    public Guid Id { get; set; }
+    //    public string Name { get; set; } // Oil Change, Battery Check
+    //    public Specialization RequiredSpecialization { get; set; }
+    //}
+
+    public enum ServiceType
     {
-        public Guid Id { get; set; }
-        public string Name { get; set; } // Oil Change, Battery Check
-        public Specialization RequiredSpecialization { get; set; }
+        OilChange,
+        BatteryCheck,
+        TireRotation,
+        BrakeInspection,
+        EngineTuneUp,
+        TransmissionService,
+        AirConditioningService,
+        WheelAlignment,
+        ExhaustSystemRepair,
+        SuspensionRepair
+
     }
 
 }
