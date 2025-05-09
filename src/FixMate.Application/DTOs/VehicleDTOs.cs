@@ -7,9 +7,9 @@ namespace FixMate.Application.DTOs
         public Guid Id { get; set; }
         public string Make { get; set; }
         public string Model { get; set; }
-        public string Type { get; set; }
+        public int Year { get; set; }
         public string LicensePlate { get; set; }
-        public Guid UserId { get; set; }
+        public Guid OwnerId { get; set; }
         public string OwnerName { get; set; }
     }
 
@@ -17,16 +17,15 @@ namespace FixMate.Application.DTOs
     {
         public string Make { get; set; }
         public string Model { get; set; }
-        public string Type { get; set; }
+        public int Year { get; set; }
         public string LicensePlate { get; set; }
-        public Guid UserId { get; set; }
+        public Guid OwnerId { get; set; }
     }
 
     public class UpdateVehicleDto
     {
         public string Make { get; set; }
         public string Model { get; set; }
-        public string Type { get; set; }
-        public string LicensePlate { get; set; }
+        public int Year { get; set; }
     }
 } 

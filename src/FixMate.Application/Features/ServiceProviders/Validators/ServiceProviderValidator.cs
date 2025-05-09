@@ -12,7 +12,7 @@ namespace FixMate.Application.Features.ServiceProviders.Validators
                 .NotEmpty()
                 .MaximumLength(100);
 
-            RuleFor(x => x.Email)
+            RuleFor(x => x.Email.Value)
                 .NotEmpty()
                 .EmailAddress();
 
@@ -24,34 +24,6 @@ namespace FixMate.Application.Features.ServiceProviders.Validators
             RuleFor(x => x.Specialization)
                 .IsInEnum();
 
-            RuleFor(x => x.BusinessName)
-                .NotEmpty()
-                .MaximumLength(100);
-
-            RuleFor(x => x.BusinessAddress)
-                .NotEmpty()
-                .MaximumLength(200);
-
-            RuleFor(x => x.BusinessPhone)
-                .NotEmpty()
-                .Matches(@"^\+?[1-9]\d{1,14}$")
-                .WithMessage("Business phone number must be in a valid format");
-
-            RuleFor(x => x.BusinessEmail)
-                .NotEmpty()
-                .EmailAddress();
-
-            RuleFor(x => x.BusinessLicense)
-                .NotEmpty()
-                .MaximumLength(50);
-
-            RuleFor(x => x.InsurancePolicy)
-                .NotEmpty()
-                .MaximumLength(50);
-
-            RuleFor(x => x.Rating)
-                .InclusiveBetween(0, 5)
-                .When(x => x.Rating.HasValue);
         }
     }
 } 

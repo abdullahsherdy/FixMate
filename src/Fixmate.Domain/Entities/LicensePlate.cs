@@ -9,8 +9,8 @@ namespace FixMate.Domain.ValueObjects
 {
     public class LicensePlate : IEquatable<LicensePlate>
     {
-        public string Value { get; }
-
+    
+        public string Value { get; private set; }
         public LicensePlate(string value)
         {
             Value = value;

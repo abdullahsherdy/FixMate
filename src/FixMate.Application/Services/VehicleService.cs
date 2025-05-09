@@ -14,15 +14,18 @@ namespace FixMate.Application.Services
     public class VehicleService : IVehicleService
     {
         private readonly IVehicleRepository _vehicleRepository;
-        private readonly IUnitOfWork _unitOfWork;
+        private readonly IUserRepository _userRepository;
+        private readonly Interfaces.Persistence.IUnitOfWork _unitOfWork;
         private readonly ILogger<VehicleService> _logger;
 
         public VehicleService(
             IVehicleRepository vehicleRepository,
+            IUserRepository userRepository,
             IUnitOfWork unitOfWork,
             ILogger<VehicleService> logger)
         {
             _vehicleRepository = vehicleRepository ?? throw new ArgumentNullException(nameof(vehicleRepository));
+            _userRepository = userRepository ?? throw new ArgumentNullException(nameof(userRepository));
             _unitOfWork = unitOfWork ?? throw new ArgumentNullException(nameof(unitOfWork));
             _logger = logger ?? throw new ArgumentNullException(nameof(logger));
         }
@@ -34,17 +37,24 @@ namespace FixMate.Application.Services
 
             try
             {
-                // Validate vehicle data
-                if (string.IsNullOrEmpty(vehicleDto.Make) || string.IsNullOrEmpty(vehicleDto.Model))
-                    throw new ArgumentException("Make and Model are required");
+                // Check if vehicle with same license plate already exists
+                var existingVehicle = await _vehicleRepository.GetByLicensePlateAsync(vehicleDto.LicensePlate);
+                if (existingVehicle != null)
+                    throw new ArgumentException("A vehicle with this license plate already exists", nameof(vehicleDto.LicensePlate));
+
+                // Verify owner exists
+                var owner = await _userRepository.GetByIdAsync(vehicleDto.OwnerId);
+                if (owner == null)
+                    throw new ArgumentException("Owner not found", nameof(vehicleDto.OwnerId));
 
                 var vehicle = new Vehicle
                 {
                     Make = vehicleDto.Make,
                     Model = vehicleDto.Model,
-                    Type = vehicleDto.Type,
+                    Year = vehicleDto.Year,
                     LicensePlate = new LicensePlate(vehicleDto.LicensePlate),
-                    UserId = vehicleDto.UserId
+                    OwnerId = vehicleDto.OwnerId,
+                    ServiceRequests = new List<ServiceRequest>()
                 };
 
                 await _vehicleRepository.AddAsync(vehicle);
@@ -54,7 +64,7 @@ namespace FixMate.Application.Services
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, "Error occurred while creating vehicle for user {UserId}", vehicleDto.UserId);
+                _logger.LogError(ex, "Error occurred while creating vehicle with license plate {LicensePlate}", vehicleDto.LicensePlate);
                 throw;
             }
         }
@@ -79,19 +89,39 @@ namespace FixMate.Application.Services
             }
         }
 
-        public async Task<IEnumerable<VehicleDto>> GetVehiclesByUserIdAsync(Guid userId)
+        public async Task<VehicleDto> GetVehicleByLicensePlateAsync(string licensePlate)
         {
-            if (userId == Guid.Empty)
-                throw new ArgumentException("Invalid user ID", nameof(userId));
+            if (string.IsNullOrEmpty(licensePlate))
+                throw new ArgumentException("License plate cannot be empty", nameof(licensePlate));
 
             try
             {
-                var vehicles = await _vehicleRepository.GetByUserIdAsync(userId);
+                var vehicle = await _vehicleRepository.GetByLicensePlateAsync(licensePlate);
+                if (vehicle == null)
+                    return null;
+
+                return MapToDto(vehicle);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error occurred while getting vehicle with license plate {LicensePlate}", licensePlate);
+                throw;
+            }
+        }
+
+        public async Task<IEnumerable<VehicleDto>> GetVehiclesByOwnerIdAsync(Guid ownerId)
+        {
+            if (ownerId == Guid.Empty)
+                throw new ArgumentException("Invalid owner ID", nameof(ownerId));
+
+            try
+            {
+                var vehicles = await _vehicleRepository.GetByOwnerIdAsync(ownerId);
                 return vehicles.Select(MapToDto);
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, "Error occurred while getting vehicles for user {UserId}", userId);
+                _logger.LogError(ex, "Error occurred while getting vehicles for owner {OwnerId}", ownerId);
                 throw;
             }
         }
@@ -125,8 +155,7 @@ namespace FixMate.Application.Services
 
                 existingVehicle.Make = vehicleDto.Make;
                 existingVehicle.Model = vehicleDto.Model;
-                existingVehicle.Type = vehicleDto.Type;
-                existingVehicle.LicensePlate = new LicensePlate(vehicleDto.LicensePlate);
+                existingVehicle.Year = vehicleDto.Year;
 
                 _vehicleRepository.Update(existingVehicle);
                 await _unitOfWork.SaveChangesAsync();
@@ -163,15 +192,15 @@ namespace FixMate.Application.Services
             }
         }
 
-        public async Task<IEnumerable<ServiceRequestDto>> GetVehicleServiceHistoryAsync(Guid vehicleId)
+        public async Task<IEnumerable<ServiceRequestDto>> GetVehicleServiceRequestsAsync(Guid vehicleId)
         {
             if (vehicleId == Guid.Empty)
                 throw new ArgumentException("Invalid vehicle ID", nameof(vehicleId));
 
             try
             {
-                var serviceRequests = await _vehicleRepository.GetServiceHistoryAsync(vehicleId);
-                return serviceRequests.Select(sr => new ServiceRequestDto
+                var requests = await _vehicleRepository.GetServiceRequestsAsync(vehicleId);
+                return requests.Select(sr => new ServiceRequestDto
                 {
                     Id = sr.Id,
                     VehicleId = sr.VehicleId,
@@ -181,13 +210,12 @@ namespace FixMate.Application.Services
                     RequestedAt = sr.RequestedAt,
                     CompletedAt = sr.CompletedAt,
                     AssignedProviderId = sr.AssignedProviderId,
-                    AssignedProviderName = sr.AssignedProvider != null ? 
-                        sr.AssignedProvider.FullName : null
+                    AssignedProviderName = sr.AssignedProvider?.FullName
                 });
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, "Error occurred while getting service history for vehicle {VehicleId}", vehicleId);
+                _logger.LogError(ex, "Error occurred while getting service requests for vehicle {VehicleId}", vehicleId);
                 throw;
             }
         }
@@ -202,11 +230,10 @@ namespace FixMate.Application.Services
                 Id = vehicle.Id,
                 Make = vehicle.Make ?? throw new InvalidOperationException("Vehicle make cannot be null"),
                 Model = vehicle.Model ?? throw new InvalidOperationException("Vehicle model cannot be null"),
-                Type = vehicle.Type,
-                LicensePlate = vehicle.LicensePlate?.Value ?? throw new InvalidOperationException("Vehicle license plate cannot be null"),
-                UserId = vehicle.UserId,
-                OwnerName = vehicle.Owner != null ? 
-                    $"{vehicle.Owner.FirstName} {vehicle.Owner.LastName}" : null
+                Year = vehicle.Year,
+                LicensePlate = vehicle.LicensePlate?.ToString() ?? throw new InvalidOperationException("Vehicle license plate cannot be null"),
+                OwnerId = vehicle.OwnerId,
+                OwnerName = vehicle.Owner?.FullName
             };
         }
     }

@@ -11,7 +11,7 @@ namespace FixMate.Application.Interfaces.Services
         Task<ServiceRequestDto> GetServiceRequestByIdAsync(Guid id);
         Task<IEnumerable<ServiceRequestDto>> GetServiceRequestsByUserIdAsync(Guid userId);
         Task<IEnumerable<ServiceRequestDto>> GetServiceRequestsByMechanicIdAsync(Guid mechanicId);
-        Task<ServiceRequestDto> UpdateServiceStatusAsync(Guid requestId, UpdateServiceStatusDto statusDto);
+        Task<ServiceRequestDto> UpdateServiceStatusAsync(Guid requestId, UpdateServiceRequestStatusDto statusDto);
         Task<ServiceRequestDto> AssignServiceProviderAsync(Guid requestId, AssignServiceProviderDto assignDto);
         Task<ServiceRequestDto> UpdateServiceRequestAsync(Guid id, UpdateServiceRequestDto requestDto);
         Task<bool> DeleteServiceRequestAsync(Guid id);

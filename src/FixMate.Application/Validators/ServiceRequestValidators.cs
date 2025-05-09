@@ -57,17 +57,9 @@ namespace FixMate.Application.Validators
     {
         public AssignServiceProviderDtoValidator()
         {
-            RuleFor(x => x.AssignedProviderId)
+            RuleFor(x => x.ProviderId)
                 .NotEmpty();
         }
     }
 
-    public class UpdateServiceStatusDtoValidator : AbstractValidator<UpdateServiceStatusDto>
-    {
-        public UpdateServiceStatusDtoValidator()
-        {
-            RuleFor(x => x.Status)
-                .IsInEnum();
-        }
-    }
 } 

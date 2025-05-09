@@ -8,10 +8,11 @@ namespace FixMate.Application.Interfaces.Persistence
     public interface IServiceRequestRepository
     {
         Task<ServiceRequest> GetByIdAsync(Guid id);
-        Task<IEnumerable<ServiceRequest>> GetByUserIdAsync(Guid userId);
-        Task<IEnumerable<ServiceRequest>> GetByMechanicIdAsync(Guid mechanicId);
-        Task AddAsync(ServiceRequest serviceRequest);
-        void Delete(ServiceRequest serviceRequest);
-        void Update(ServiceRequest serviceRequest);
+        Task<IEnumerable<ServiceRequest>> GetAllAsync();
+        Task<IEnumerable<ServiceRequest>> GetByVehicleIdAsync(Guid vehicleId);
+        Task<IEnumerable<ServiceRequest>> GetByProviderIdAsync(Guid providerId);
+        Task AddAsync(ServiceRequest request);
+        void Update(ServiceRequest request);
+        void Delete(ServiceRequest request);
     }
 } 

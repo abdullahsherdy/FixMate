@@ -10,7 +10,6 @@ using Microsoft.IdentityModel.Tokens;
 using FixMate.Application.DTOs;
 using FixMate.Application.Interfaces.Services;
 using FixMate.Web.Configuration;
-using Fixmate.
 namespace FixMate.Web.Controllers
 {
     [ApiController]
@@ -45,7 +44,15 @@ namespace FixMate.Web.Controllers
         [HttpPost("register")]
         public async Task<ActionResult<AuthResponse>> Register(RegisterRequest request)
         {
-            var user = await _authService.RegisterUserAsync(request);
+            var R = new RegisterRequest
+            {
+                Email = request.Email,
+                Password = request.Password,
+                FirstName = request.FirstName,
+                LastName = request.LastName,
+                PhoneNumber = request.PhoneNumber
+            };
+            var user = await _authService.RegisterUserAsync(R);
             if (user == null)
                 return BadRequest(new { message = "User registration failed" });
 

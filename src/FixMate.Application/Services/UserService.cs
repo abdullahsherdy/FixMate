@@ -5,6 +5,7 @@ using System.Linq;
 using FixMate.Application.Interfaces.Services;
 using FixMate.Application.Interfaces.Persistence;
 using FixMate.Domain.Entities;
+using FixMate.Domain.Enums;
 using FixMate.Application.DTOs;
 using Microsoft.Extensions.Logging;
 
@@ -33,21 +34,19 @@ namespace FixMate.Application.Services
 
             try
             {
-                // Check if user with same email exists
+                // Check if user with same email already exists
                 var existingUser = await _userRepository.GetByEmailAsync(userDto.Email);
                 if (existingUser != null)
-                    throw new InvalidOperationException("User with this email already exists");
+                    throw new ArgumentException("A user with this email already exists", nameof(userDto.Email));
 
                 var user = new User
                 {
+                    FullName = userDto.FullName,
                     Email = userDto.Email,
-                    PasswordHash = BCrypt.Net.BCrypt.HashPassword(userDto.Password),
-                    FirstName = userDto.FirstName,
-                    LastName = userDto.LastName,
                     PhoneNumber = userDto.PhoneNumber,
                     CreatedAt = DateTime.UtcNow,
                     IsActive = true,
-                    UserRoles = new List<UserRole>()
+                    UserRoles = new List<UserRole> { new UserRole { Role = userDto.Role } }
                 };
 
                 await _userRepository.AddAsync(user);
@@ -84,7 +83,7 @@ namespace FixMate.Application.Services
 
         public async Task<UserDto> GetUserByEmailAsync(string email)
         {
-            if (string.IsNullOrWhiteSpace(email))
+            if (string.IsNullOrEmpty(email))
                 throw new ArgumentException("Email cannot be empty", nameof(email));
 
             try
@@ -129,8 +128,7 @@ namespace FixMate.Application.Services
                 if (existingUser == null)
                     throw new ArgumentException("User not found", nameof(id));
 
-                existingUser.FirstName = userDto.FirstName;
-                existingUser.LastName = userDto.LastName;
+                existingUser.FullName = userDto.FullName;
                 existingUser.PhoneNumber = userDto.PhoneNumber;
 
                 _userRepository.Update(existingUser);
@@ -181,15 +179,15 @@ namespace FixMate.Application.Services
                     Id = v.Id,
                     Make = v.Make,
                     Model = v.Model,
-                    Type = v.Type,
+                    Year = v.Year,
                     LicensePlate = v.LicensePlate.Value,
-                    UserId = v.UserId,
-                    OwnerName = $"{v.Owner.FirstName} {v.Owner.LastName}"
+                    OwnerId = v.OwnerId,
+                    OwnerName = v.Owner?.FullName
                 });
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, "Error occurred while getting vehicles for user with ID {UserId}", userId);
+                _logger.LogError(ex, "Error occurred while getting vehicles for user {UserId}", userId);
                 throw;
             }
         }
@@ -202,14 +200,10 @@ namespace FixMate.Application.Services
             return new UserDto
             {
                 Id = user.Id,
+                FullName = user.FullName ?? throw new InvalidOperationException("User full name cannot be null"),
                 Email = user.Email ?? throw new InvalidOperationException("User email cannot be null"),
-                FirstName = user.FirstName ?? throw new InvalidOperationException("User first name cannot be null"),
-                LastName = user.LastName ?? throw new InvalidOperationException("User last name cannot be null"),
                 PhoneNumber = user.PhoneNumber ?? throw new InvalidOperationException("User phone number cannot be null"),
-                CreatedAt = user.CreatedAt,
-                LastLoginAt = user.LastLoginAt,
-                IsActive = user.IsActive,
-                Roles = user.UserRoles?.Select(ur => ur.Role.Name).ToList() ?? new List<string>()
+                Role = user.UserRoles?.FirstOrDefault()?.Role ?? throw new InvalidOperationException("User must have at least one role")
             };
         }
     }

@@ -1,35 +1,74 @@
 using System;
-using System.Collections.Generic;
+using System.ComponentModel.DataAnnotations;
+using FixMate.Domain.Entities;
 
 namespace FixMate.Application.DTOs
 {
     public class UserDto
     {
         public Guid Id { get; set; }
+        public string FullName { get; set; }
         public string Email { get; set; }
-        public string FirstName { get; set; }
-        public string LastName { get; set; }
         public string PhoneNumber { get; set; }
+        public Role Role { get; set; }
         public DateTime CreatedAt { get; set; }
         public DateTime? LastLoginAt { get; set; }
         public bool IsActive { get; set; }
-        public ICollection<string> Roles { get; set; }
     }
 
-    public class CreateUserDto
-    {
-        public string Email { get; set; }
-        public string Password { get; set; }
-        public string FirstName { get; set; }
-        public string LastName { get; set; }
-        public string PhoneNumber { get; set; }
-    }
+    //public class RegisterRequest
+    //{
+    //    [Required]
+    //    [StringLength(100)]
+    //    public string FullName { get; set; }
 
-    public class UpdateUserDto
+    //    [Required]
+    //    [EmailAddress]
+    //    [StringLength(100)]
+    //    public string Email { get; set; }
+
+    //    [Required]
+    //    [StringLength(100, MinimumLength = 6)]
+    //    public string Password { get; set; }
+
+    //    [Required]
+    //    [Phone]
+    //    [StringLength(20)]
+    //    public string PhoneNumber { get; set; }
+
+    //    [Required]
+    //    public Role Role { get; set; }
+    //}
+
+    //public class LoginRequest
+    //{
+    //    [Required]
+    //    [EmailAddress]
+    //    public string Email { get; set; }
+
+    //    [Required]
+    //    public string Password { get; set; }
+    //}
+
+    //public class ChangePasswordRequest
+    //{
+    //    [Required]
+    //    public string CurrentPassword { get; set; }
+
+    //    [Required]
+    //    [StringLength(100, MinimumLength = 6)]
+    //    public string NewPassword { get; set; }
+    //}
+
+    public class UpdateUserRequest
     {
-        public string FirstName { get; set; }
-        public string LastName { get; set; }
+        [Required]
+        [StringLength(100)]
+        public string FullName { get; set; }
+
+        [Required]
+        [Phone]
+        [StringLength(20)]
         public string PhoneNumber { get; set; }
-        public bool IsActive { get; set; }
     }
 } 

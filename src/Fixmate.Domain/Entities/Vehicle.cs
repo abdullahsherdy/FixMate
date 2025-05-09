@@ -1,20 +1,37 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-using FixMate.Domain.ValueObjects;
+using System.ComponentModel.DataAnnotations;
+using System.ComponentModel.DataAnnotations.Schema;
+
 namespace FixMate.Domain.Entities
 {
     public class Vehicle
     {
-        public Guid Id { get; set; }
-        public string Make { get; set; }          // Toyota, Honda
-        public string Model { get; set; }         // Camry, Civic
-        public string Type { get; set; }          // Car, Bike
-        public LicensePlate LicensePlate { get; set; }
-        public Guid UserId { get; set; }
-        public User Owner { get; set; }
-    }
+        [Key]
+        public Guid Id { get; set; } = Guid.NewGuid();
 
+        [Required]
+        [StringLength(50)]
+        public string Make { get; set; }
+
+        [Required]
+        [StringLength(50)]
+        public string Model { get; set; }
+
+        [Required]
+        [Range(1900, 2100)]
+        public int Year { get; set; }
+
+        [Required]
+        [StringLength(20)]
+        public string LicensePlate { get; set; }
+
+        [Required]
+        [ForeignKey("Owner")]
+        public Guid OwnerId { get; set; }
+        public virtual User Owner { get; set; }
+
+        // Navigation properties
+        public virtual ICollection<ServiceRequest> ServiceRequests { get; set; } = new List<ServiceRequest>();
+    }
 }

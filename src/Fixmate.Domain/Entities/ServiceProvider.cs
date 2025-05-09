@@ -12,7 +12,7 @@ namespace FixMate.Domain.Entities
     public class ServiceProvider
     {
         [Key]
-        public Guid Id { get; set; }
+        public Guid Id { get; set; } = Guid.NewGuid();
         [Required]
         [MaxLength(100)]
         public string FullName { get; set; }
@@ -22,7 +22,7 @@ namespace FixMate.Domain.Entities
         [Required]
         public Specialization Specialization { get; set; }
         public bool IsAvailable { get; set; } = default!;
-        public ICollection<ServiceRequest> AssignedRequests { get; set; }
+        public List<ServiceRequest> AssignedRequests { get; set; } = new List<ServiceRequest>();
     }
 
 }

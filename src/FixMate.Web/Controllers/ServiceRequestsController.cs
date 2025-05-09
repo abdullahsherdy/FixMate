@@ -37,27 +37,27 @@ namespace FixMate.Web.Controllers
             return Ok(request);
         }
 
-        [HttpGet("user/{userId}")]
-        public async Task<ActionResult<IEnumerable<ServiceRequestDto>>> GetByUserId(Guid userId)
+        [HttpGet("vehicle/{vehicleId}")]
+        public async Task<ActionResult<IEnumerable<ServiceRequestDto>>> GetByVehicleId(Guid vehicleId)
         {
-            var requests = await _serviceRequestService.GetServiceRequestsByUserIdAsync(userId);
+            var requests = await _serviceRequestService.GetServiceRequestsByVehicleIdAsync(vehicleId);
             return Ok(requests);
         }
 
-        [HttpGet("mechanic/{mechanicId}")]
-        public async Task<ActionResult<IEnumerable<ServiceRequestDto>>> GetByMechanicId(Guid mechanicId)
+        [HttpGet("provider/{providerId}")]
+        public async Task<ActionResult<IEnumerable<ServiceRequestDto>>> GetByProviderId(Guid providerId)
         {
-            var requests = await _serviceRequestService.GetServiceRequestsByMechanicIdAsync(mechanicId);
+            var requests = await _serviceRequestService.GetServiceRequestsByProviderIdAsync(providerId);
             return Ok(requests);
         }
 
         [HttpPut("{id}/status")]
         [Authorize(Roles = "Admin,ServiceProvider")]
-        public async Task<ActionResult<ServiceRequestDto>> UpdateStatus(Guid id, UpdateServiceStatusDto statusDto)
+        public async Task<ActionResult<ServiceRequestDto>> UpdateStatus(Guid id, UpdateServiceRequestStatusDto statusDto)
         {
             try
             {
-                var request = await _serviceRequestService.UpdateServiceStatusAsync(id, statusDto);
+                var request = await _serviceRequestService.UpdateServiceRequestStatusAsync(id, statusDto.Status);
                 return Ok(request);
             }
             catch (ArgumentException ex)
@@ -72,7 +72,7 @@ namespace FixMate.Web.Controllers
         {
             try
             {
-                var request = await _serviceRequestService.AssignServiceProviderAsync(id, assignDto);
+                var request = await _serviceRequestService.AssignServiceProviderAsync(id, assignDto.ProviderId);
                 return Ok(request);
             }
             catch (ArgumentException ex)

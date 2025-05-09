@@ -40,7 +40,7 @@ namespace FixMate.Application.Services
 
             try
             {
-                // Validate vehicle exists
+                // Verify vehicle exists
                 var vehicle = await _vehicleRepository.GetByIdAsync(requestDto.VehicleId);
                 if (vehicle == null)
                     throw new ArgumentException("Vehicle not found", nameof(requestDto.VehicleId));
@@ -49,8 +49,8 @@ namespace FixMate.Application.Services
                 {
                     VehicleId = requestDto.VehicleId,
                     ServiceType = requestDto.ServiceType,
-                    Notes = requestDto.Notes,
                     Status = ServiceStatus.Pending,
+                    Notes = requestDto.Notes,
                     RequestedAt = DateTime.UtcNow
                 };
 
@@ -86,58 +86,54 @@ namespace FixMate.Application.Services
             }
         }
 
-        public async Task<IEnumerable<ServiceRequestDto>> GetServiceRequestsByUserIdAsync(Guid userId)
+        public async Task<IEnumerable<ServiceRequestDto>> GetServiceRequestsByVehicleIdAsync(Guid vehicleId)
         {
-            if (userId == Guid.Empty)
-                throw new ArgumentException("Invalid user ID", nameof(userId));
+            if (vehicleId == Guid.Empty)
+                throw new ArgumentException("Invalid vehicle ID", nameof(vehicleId));
 
             try
             {
-                var requests = await _serviceRequestRepository.GetByUserIdAsync(userId);
+                var requests = await _serviceRequestRepository.GetByVehicleIdAsync(vehicleId);
                 return requests.Select(MapToDto);
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, "Error occurred while getting service requests for user {UserId}", userId);
+                _logger.LogError(ex, "Error occurred while getting service requests for vehicle {VehicleId}", vehicleId);
                 throw;
             }
         }
 
-        public async Task<IEnumerable<ServiceRequestDto>> GetServiceRequestsByMechanicIdAsync(Guid mechanicId)
+        public async Task<IEnumerable<ServiceRequestDto>> GetServiceRequestsByProviderIdAsync(Guid providerId)
         {
-            if (mechanicId == Guid.Empty)
-                throw new ArgumentException("Invalid mechanic ID", nameof(mechanicId));
+            if (providerId == Guid.Empty)
+                throw new ArgumentException("Invalid service provider ID", nameof(providerId));
 
             try
             {
-                var requests = await _serviceRequestRepository.GetByMechanicIdAsync(mechanicId);
+                var requests = await _serviceRequestRepository.GetByProviderIdAsync(providerId);
                 return requests.Select(MapToDto);
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, "Error occurred while getting service requests for mechanic {MechanicId}", mechanicId);
+                _logger.LogError(ex, "Error occurred while getting service requests for provider {ProviderId}", providerId);
                 throw;
             }
         }
 
-        public async Task<ServiceRequestDto> UpdateServiceStatusAsync(Guid requestId, UpdateServiceStatusDto statusDto)
+        public async Task<ServiceRequestDto> UpdateServiceRequestStatusAsync(Guid id, ServiceStatus status)
         {
-            if (requestId == Guid.Empty)
-                throw new ArgumentException("Invalid service request ID", nameof(requestId));
-            if (statusDto == null)
-                throw new ArgumentNullException(nameof(statusDto));
+            if (id == Guid.Empty)
+                throw new ArgumentException("Invalid service request ID", nameof(id));
 
             try
             {
-                var request = await _serviceRequestRepository.GetByIdAsync(requestId);
+                var request = await _serviceRequestRepository.GetByIdAsync(id);
                 if (request == null)
-                    throw new ArgumentException("Service request not found", nameof(requestId));
+                    throw new ArgumentException("Service request not found", nameof(id));
 
-                request.Status = statusDto.Status;
-                if (statusDto.Status == ServiceStatus.Completed)
-                {
+                request.Status = status;
+                if (status == ServiceStatus.Completed)
                     request.CompletedAt = DateTime.UtcNow;
-                }
 
                 _serviceRequestRepository.Update(request);
                 await _unitOfWork.SaveChangesAsync();
@@ -146,17 +142,17 @@ namespace FixMate.Application.Services
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, "Error occurred while updating status for request {RequestId}", requestId);
+                _logger.LogError(ex, "Error occurred while updating status for service request {RequestId}", id);
                 throw;
             }
         }
 
-        public async Task<ServiceRequestDto> AssignServiceProviderAsync(Guid requestId, AssignServiceProviderDto assignDto)
+        public async Task<ServiceRequestDto> AssignServiceProviderAsync(Guid requestId, Guid providerId)
         {
             if (requestId == Guid.Empty)
                 throw new ArgumentException("Invalid service request ID", nameof(requestId));
-            if (assignDto == null)
-                throw new ArgumentNullException(nameof(assignDto));
+            if (providerId == Guid.Empty)
+                throw new ArgumentException("Invalid service provider ID", nameof(providerId));
 
             try
             {
@@ -164,12 +160,15 @@ namespace FixMate.Application.Services
                 if (request == null)
                     throw new ArgumentException("Service request not found", nameof(requestId));
 
-                var provider = await _serviceProviderRepository.GetByIdAsync(assignDto.AssignedProviderId);
+                var provider = await _serviceProviderRepository.GetByIdAsync(providerId);
                 if (provider == null)
-                    throw new ArgumentException("Service provider not found", nameof(assignDto.AssignedProviderId));
+                    throw new ArgumentException("Service provider not found", nameof(providerId));
 
-                request.AssignedProviderId = assignDto.AssignedProviderId;
-                request.Status = ServiceStatus.Assigned;
+                if (!provider.IsAvailable)
+                    throw new InvalidOperationException("Service provider is not available");
+
+                request.AssignedProviderId = providerId;
+                request.Status = ServiceStatus.InProgress;
 
                 _serviceRequestRepository.Update(request);
                 await _unitOfWork.SaveChangesAsync();
@@ -178,8 +177,7 @@ namespace FixMate.Application.Services
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, "Error occurred while assigning provider {ProviderId} to request {RequestId}", 
-                    assignDto.AssignedProviderId, requestId);
+                _logger.LogError(ex, "Error occurred while assigning provider {ProviderId} to request {RequestId}", providerId, requestId);
                 throw;
             }
         }
@@ -246,7 +244,7 @@ namespace FixMate.Application.Services
                 VehicleId = request.VehicleId,
                 ServiceType = request.ServiceType,
                 Status = request.Status,
-                Notes = request.Notes ?? throw new InvalidOperationException("Service request notes cannot be null"),
+                Notes = request.Notes,
                 RequestedAt = request.RequestedAt,
                 CompletedAt = request.CompletedAt,
                 AssignedProviderId = request.AssignedProviderId,
