@@ -4,6 +4,9 @@ Microsoft Visual Studio Solution File, Format Version 12.00
 VisualStudioVersion = 17.13.35931.197
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "FixMate.Web", "FixMate.Web.csproj", "{4922B776-4ADF-4286-A595-EEC659DBA01D}"
+	ProjectSection(ProjectDependencies) = postProject
+		{32647E61-FAA8-E2C1-6AED-B53C51F15657} = {32647E61-FAA8-E2C1-6AED-B53C51F15657}
+	EndProjectSection
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "FixMate.Domain", "..\Fixmate.Domain\FixMate.Domain.csproj", "{32647E61-FAA8-E2C1-6AED-B53C51F15657}"
 EndProject
