@@ -17,38 +17,64 @@ namespace FixMate.Infrastructure.Persistence.Repositories
             _context = context;
         }
 
-        public async Task<ServiceRequest> GetByIdAsync(Guid id)
+        public async Task<IEnumerable<ServiceRequest>> GetByOwnerIdAsync(Guid id)
         {
             return await _context.ServiceRequests
                 .Include(sr => sr.Vehicle)
                 .Include(sr => sr.AssignedProvider)
-                .Where(sr => sr.Vehicle.UserId == id)
+                .Where(sr => sr.Vehicle.OwnerId == id)
                 .ToListAsync();
         }
-
-
-        public async Task<IEnumerable<ServiceRequest>> GetByMechanicIdAsync(Guid mechanicId)
-        {
-            return await _context.ServiceRequests
-                .Include(sr => sr.Vehicle)
-                .Include(sr => sr.AssignedProvider)
-                .Where(sr => sr.AssignedProviderId == mechanicId)
-                .ToListAsync();
-        }
+       
 
         public async Task AddAsync(ServiceRequest serviceRequest)
         {
+            if (serviceRequest == null)
+                throw new ArgumentNullException(nameof(serviceRequest));
+
+           
+
             await _context.ServiceRequests.AddAsync(serviceRequest);
         }
 
         public void Delete(ServiceRequest serviceRequest)
         {
-            _context.ServiceRequests.Remove(serviceRequest);
+            if (_context.ServiceRequests.Local.Any(e => e.Id == serviceRequest.Id))
+            {
+                _context.Entry(serviceRequest).State = EntityState.Detached;
+            }
         }
 
         public void Update(ServiceRequest serviceRequest)
         {
             _context.Entry(serviceRequest).State = EntityState.Modified;
+        }
+
+        public async Task<IEnumerable<ServiceRequest>> GetAllAsync()
+        {
+            return await _context.ServiceRequests
+                .Include(sr => sr.Vehicle)
+                .Include(sr => sr.AssignedProvider)
+                .ToListAsync(); 
+        }
+
+        public async Task<IEnumerable<ServiceRequest>> GetByVehicleIdAsync(Guid vehicleId)
+        {
+            return await _context.ServiceRequests
+               .Include(sr => sr.Vehicle)
+               .Include(sr => sr.AssignedProvider)
+               .Where(sr => sr.VehicleId== vehicleId)
+               .ToListAsync();
+        }
+
+        public async Task<IEnumerable<ServiceRequest>> GetByProviderIdAsync(Guid providerId)
+        {
+            throw new NotImplementedException();
+        }
+
+        public async Task<ServiceRequest> GetByIdAsync(Guid id)
+        {
+            return await _context.ServiceRequests.FirstOreDefaultAsync(sr => sr.Id == id);
         }
     }
 } 
