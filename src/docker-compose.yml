@@ -9,7 +9,7 @@ services:
       - "8080:80"
     environment:
       - ASPNETCORE_ENVIRONMENT=Development
-      - ConnectionStrings__DefaultConnection=Server=db;Database=FixMateDb;User Id=sa;Password=YourStrong!Passw0rd;TrustServerCertificate=True
+      - ConnectionStrings__DefaultConnection=Server=.;Database=FixMateDb;Trusted_Connection=True;MultipleActiveResultSets=true;TrustServerCertificate=True
     depends_on:
       - db
 
