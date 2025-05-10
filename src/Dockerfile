@@ -3,7 +3,7 @@ FROM mcr.microsoft.com/dotnet/sdk:8.0 AS build
 
 WORKDIR /src
 
-# Install ICU libraries for globalization support
+# Install ICU libraries for globalization support 
 RUN apt-get update && apt-get install -y icu-devtools
 
 # Set environment variable to disable globalization invariant mode
