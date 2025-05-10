@@ -15,7 +15,7 @@ namespace FixMate.Application.Services
     {
         private readonly IVehicleRepository _vehicleRepository;
         private readonly IUserRepository _userRepository;
-        private readonly Interfaces.Persistence.IUnitOfWork _unitOfWork;
+        private readonly IUnitOfWork _unitOfWork;
         private readonly ILogger<VehicleService> _logger;
 
         public VehicleService(
