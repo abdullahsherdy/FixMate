@@ -1,18 +1,32 @@
 version: '3.8'
 
 services:
+  # Backend service (FixMate.Web)
   api:
     build:
       context: .
-      dockerfile: Dockerfile
+      dockerfile: Dockerfile.backend # Adjust the Dockerfile path if needed
     ports:
       - "8080:80"
     environment:
       - ASPNETCORE_ENVIRONMENT=Development
-      - ConnectionStrings__DefaultConnection=Server=.;Database=FixMateDb;Trusted_Connection=True;MultipleActiveResultSets=true;TrustServerCertificate=True
+      - ConnectionStrings__DefaultConnection=Server=db;Database=FixMateDb;User=sa;Password=YourStrong!Passw0rd;TrustServerCertificate=True
     depends_on:
       - db
+    networks:
+      - fixmate-network
 
+  # Frontend service (React, etc.)
+  frontend:
+    build:
+      context: ./frontend # Make sure your frontend Dockerfile is in this directory
+      dockerfile: Dockerfile.frontend
+    ports:
+      - "3000:80"
+    networks:
+      - fixmate-network
+
+  # Database service (SQL Server)
   db:
     image: mcr.microsoft.com/mssql/server:2022-latest
     environment:
@@ -22,6 +36,12 @@ services:
       - "1433:1433"
     volumes:
       - sqldata:/var/opt/mssql
+    networks:
+      - fixmate-network
 
 volumes:
-  sqldata: 
+  sqldata:
+
+networks:
+  fixmate-network:
+    driver: bridge

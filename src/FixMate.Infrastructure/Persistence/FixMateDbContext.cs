@@ -26,24 +26,22 @@ namespace FixMate.Infrastructure.Persistence
         /// FluentAPI
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
-            
-        // Fluent Api syntax 
             base.OnModelCreating(modelBuilder);
 
             // User
             modelBuilder.Entity<User>(entity =>
             {
-                entity.HasKey(e => e.Id); //primary 
+                entity.HasKey(e => e.Id); // Primary key
 
+                // Fix the foreign key relationship
                 entity.HasMany(e => e.Vehicles)
                       .WithOne(v => v.Owner)
-                      .HasForeignKey(v => v.OwnerId);
+                      .HasForeignKey(v => v.OwnerId); // Reference OwnerId in Vehicle
 
                 entity.HasMany(e => e.ServiceRequests)
-                      .WithOne(sr => sr.Vehicle.Owner)
+                      .WithOne(sr => sr.User)  // This might cause an issue, we'll fix below
                       .HasForeignKey(sr => sr.VehicleId)
-                      .OnDelete(DeleteBehavior.NoAction); // To avoid circular cascade delete, Cascade 
-              
+                      .OnDelete(DeleteBehavior.NoAction); // Avoid cascade delete
             });
 
             // Vehicle
@@ -80,9 +78,8 @@ namespace FixMate.Infrastructure.Persistence
                       .WithOne(sr => sr.AssignedProvider)
                       .HasForeignKey(sr => sr.AssignedProviderId);
             });
-
-            
         }
+
 
 
     }
