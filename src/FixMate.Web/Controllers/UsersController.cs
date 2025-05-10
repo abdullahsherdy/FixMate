@@ -56,7 +56,7 @@ namespace FixMate.Web.Controllers
         }
 
         [HttpPut("{id}")]
-        public async Task<IActionResult> UpdateUser(Guid id, UpdateUserDto userDto)
+        public async Task<IActionResult> UpdateUser(Guid id, UpdateUserRequest userDto)
         {
             try
             {

@@ -72,7 +72,7 @@ namespace FixMate.Web.Controllers
         {
             try
             {
-                var request = await _serviceRequestService.AssignServiceProviderAsync(id, assignDto.ProviderId);
+                var request = await _serviceRequestService.AssignServiceProviderAsync(id, assignDto);
                 return Ok(request);
             }
             catch (ArgumentException ex)

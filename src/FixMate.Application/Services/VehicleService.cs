@@ -5,7 +5,6 @@ using System.Linq;
 using FixMate.Application.Interfaces.Services;
 using FixMate.Application.Interfaces.Persistence;
 using FixMate.Domain.Entities;
-using FixMate.Domain.ValueObjects;
 using FixMate.Application.DTOs;
 using Microsoft.Extensions.Logging;
 
@@ -52,7 +51,7 @@ namespace FixMate.Application.Services
                     Make = vehicleDto.Make,
                     Model = vehicleDto.Model,
                     Year = vehicleDto.Year,
-                    LicensePlate = new LicensePlate(vehicleDto.LicensePlate),
+                    LicensePlate = vehicleDto.LicensePlate,
                     OwnerId = vehicleDto.OwnerId,
                     ServiceRequests = new List<ServiceRequest>()
                 };
@@ -116,7 +115,7 @@ namespace FixMate.Application.Services
 
             try
             {
-                var vehicles = await _vehicleRepository.GetByOwnerIdAsync(ownerId);
+                var vehicles = await _vehicleRepository.GetByUserIdAsync(ownerId);
                 return vehicles.Select(MapToDto);
             }
             catch (Exception ex)
@@ -199,7 +198,7 @@ namespace FixMate.Application.Services
 
             try
             {
-                var requests = await _vehicleRepository.GetServiceRequestsAsync(vehicleId);
+                var requests = await _vehicleRepository.GetServiceHistoryAsync(vehicleId);
                 return requests.Select(sr => new ServiceRequestDto
                 {
                     Id = sr.Id,
@@ -235,6 +234,16 @@ namespace FixMate.Application.Services
                 OwnerId = vehicle.OwnerId,
                 OwnerName = vehicle.Owner?.FullName
             };
+        }
+
+        public Task<IEnumerable<VehicleDto>> GetVehiclesByUserIdAsync(Guid userId)
+        {
+            throw new NotImplementedException();
+        }
+
+        public Task<IEnumerable<ServiceRequestDto>> GetVehicleServiceHistoryAsync(Guid vehicleId)
+        {
+            throw new NotImplementedException();
         }
     }
 } 

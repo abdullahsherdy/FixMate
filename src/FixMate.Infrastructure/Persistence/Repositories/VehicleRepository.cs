@@ -62,5 +62,10 @@ namespace FixMate.Infrastructure.Persistence.Repositories
                 .OrderByDescending(sr => sr.RequestedAt)
                 .ToListAsync();
         }
+
+        public async Task<Vehicle> GetByLicensePlateAsync(string LP)
+        {
+            return await _context.Vehicles.FirstOrDefaultAsync(V => V.LicensePlate == LP);
+        }
     }
 } 

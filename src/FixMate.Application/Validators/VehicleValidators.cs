@@ -15,16 +15,12 @@ namespace FixMate.Application.Validators
                 .NotEmpty()
                 .MaximumLength(50);
 
-            RuleFor(x => x.Type)
-                .NotEmpty()
-                .MaximumLength(50);
-
             RuleFor(x => x.LicensePlate)
                 .NotEmpty()
                 .Matches(@"^[A-Z0-9\-]{4,10}$")
                 .WithMessage("License plate must contain only uppercase letters, numbers, and hyphens");
 
-            RuleFor(x => x.UserId)
+            RuleFor(x => x.OwnerId)
                 .NotEmpty();
         }
     }
@@ -41,16 +37,12 @@ namespace FixMate.Application.Validators
                 .NotEmpty()
                 .MaximumLength(50);
 
-            RuleFor(x => x.Type)
-                .NotEmpty()
-                .MaximumLength(50);
-
             RuleFor(x => x.LicensePlate)
                 .NotEmpty()
                 .Matches(@"^[A-Z0-9\-]{4,10}$")
                 .WithMessage("License plate must contain only uppercase letters, numbers, and hyphens");
 
-            RuleFor(x => x.UserId)
+            RuleFor(x => x.OwnerId)
                 .NotEmpty();
         }
     }
@@ -67,14 +59,6 @@ namespace FixMate.Application.Validators
                 .NotEmpty()
                 .MaximumLength(50);
 
-            RuleFor(x => x.Type)
-                .NotEmpty()
-                .MaximumLength(50);
-
-            RuleFor(x => x.LicensePlate)
-                .NotEmpty()
-                .Matches(@"^[A-Z0-9\-]{4,10}$")
-                .WithMessage("License plate must contain only uppercase letters, numbers, and hyphens");
         }
     }
 } 

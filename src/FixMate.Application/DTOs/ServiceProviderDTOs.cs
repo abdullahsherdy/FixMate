@@ -32,6 +32,9 @@ namespace FixMate.Application.DTOs
 
         [Required]
         public Specialization Specialization { get; set; }
+
+        [Required]
+        public string Password { get; set; }
     }
 
     public class UpdateServiceProviderDto

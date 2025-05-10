@@ -106,7 +106,7 @@ namespace FixMate.Web.Controllers
         public async Task<IActionResult> UpdateAvailability(Guid id, UpdateAvailabilityDto availabilityDto)
         {
             var result = await _serviceProviderService.UpdateAvailabilityAsync(id, availabilityDto);
-            if (!result)
+            if (result==null)
                 return NotFound();
 
             return NoContent();

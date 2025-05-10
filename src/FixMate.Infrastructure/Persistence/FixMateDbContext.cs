@@ -1,26 +1,39 @@
 using Microsoft.EntityFrameworkCore;
-using FixMate.Infrastructure.Persistence.Configurations;
+using FixMate.Infrastructure.Persistence;
 using FixMate.Domain.Entities;
 namespace FixMate.Infrastructure.Persistence
 {
+    /// <summary>
+    ///  EF Core 
+    /// </summary>
+    /// access way to deal with database in EF core 
+    /// represetn database 
     public class FixMateDbContext : DbContext
     {
         public FixMateDbContext(DbContextOptions<FixMateDbContext> options) : base(options){}
-        public DbSet<User> Users { get; set; }
-        public DbSet<Vehicle> Vehicles { get; set; }
-        public DbSet<ServiceRequest> ServiceRequests { get; set; }
-        public DbSet<ServiceProvider> ServiceProviders { get; set; }
 
+        /// <summary>
+        ///  Dbset -> Table 
+        /// </summary>
+        public DbSet<User> Users { get; set; }
+        public DbSet<Vehicle> Vehicles { get; set; } // Bike, Car, etc.. 
+        public DbSet<ServiceRequest> ServiceRequests { get; set; } // Service 
+        public DbSet<ServiceProvider> ServiceProviders { get; set; } /// Mechanics 
+
+
+        /// Database Constraints in EF 
+        /// DataAnnotations 
+        /// FluentAPI
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
             
-        
+        // Fluent Api syntax 
             base.OnModelCreating(modelBuilder);
 
             // User
             modelBuilder.Entity<User>(entity =>
             {
-                entity.HasKey(e => e.Id);
+                entity.HasKey(e => e.Id); //primary 
 
                 entity.HasMany(e => e.Vehicles)
                       .WithOne(v => v.Owner)
@@ -29,8 +42,7 @@ namespace FixMate.Infrastructure.Persistence
                 entity.HasMany(e => e.ServiceRequests)
                       .WithOne(sr => sr.Vehicle.Owner)
                       .HasForeignKey(sr => sr.VehicleId)
-                      .OnDelete(DeleteBehavior.NoAction); // To avoid circular cascade delete
-
+                      .OnDelete(DeleteBehavior.NoAction); // To avoid circular cascade delete, Cascade 
               
             });
 

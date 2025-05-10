@@ -3,7 +3,6 @@ using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
 using System.Text.Json.Serialization;
-using FixMate.Domain.ValueObjects;
 using FixMate.Domain.Enums;
 
 namespace FixMate.Domain.Entities
@@ -22,8 +21,6 @@ namespace FixMate.Domain.Entities
         [EmailAddress]
         public string Email { get; set; }
 
-        [Required]
-        [StringLength(100)]
         public string PasswordHash { get; set; }
 
         [Required]

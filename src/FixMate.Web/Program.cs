@@ -4,29 +4,36 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
 using Microsoft.OpenApi.Models;
 using Serilog;
+using FluentValidation;
+
 using FixMate.Infrastructure.Persistence;
 using FixMate.Application.Configuration;
 using FixMate.Application.Interfaces.Services;
 using FixMate.Application.Services;
 using FixMate.Application.Interfaces.Persistence;
 using FixMate.Infrastructure.Persistence.Repositories;
-using FluentValidation;
-using FluentValidation.AspNetCore;
+using FixMate.Application.DTOs;
+using FixMate.Application.Validators;
+using FixMate.Infrastructure.Persistence.Seeders;
+using FixMate.Web.Middleware;
 
 var builder = WebApplication.CreateBuilder(args);
 
-// Add services to the container.
-builder.Services.AddControllers();
+// Configure Serilog Logging
+Log.Logger = new LoggerConfiguration()
+    .ReadFrom.Configuration(builder.Configuration)
+    .CreateLogger();
+builder.Host.UseSerilog();
 
-// Configure strongly typed settings
+// Load and bind AppSettings
 var appSettings = builder.Configuration.Get<AppSettings>();
 builder.Services.Configure<AppSettings>(builder.Configuration);
 
-// Configure DbContext
+// Add DbContext
 builder.Services.AddDbContext<FixMateDbContext>(options =>
     options.UseSqlServer(appSettings.ConnectionStrings.DefaultConnection));
 
-// Configure JWT Authentication
+// Add Authentication
 builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
     .AddJwtBearer(options =>
     {
@@ -38,82 +45,35 @@ builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
             ValidateIssuerSigningKey = true,
             ValidIssuer = appSettings.Jwt.Issuer,
             ValidAudience = appSettings.Jwt.Audience,
-            IssuerSigningKey = new SymmetricSecurityKey(
-                Encoding.UTF8.GetBytes(appSettings.Jwt.Key))
+            IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(appSettings.Jwt.Key))
         };
     });
 
-// Configure Authorization
+// Add Authorization
 builder.Services.AddAuthorization(options =>
 {
-    options.AddPolicy("RequireAdminRole", policy =>
-        policy.RequireRole("Admin"));
+    options.AddPolicy("RequireAdminRole", policy => policy.RequireRole("Admin"));
 });
 
-// Configure CORS
+// Add CORS
 builder.Services.AddCors(options =>
 {
-    options.AddPolicy("AllowSpecificOrigins",
-        builder =>
-        {
-            builder.WithOrigins(appSettings.Cors.AllowedOrigins.ToArray())
-                   .AllowAnyMethod()
-                   .AllowAnyHeader();
-        });
+    options.AddPolicy("AllowSpecificOrigins", policy =>
+    {
+        policy.WithOrigins(appSettings.Cors.AllowedOrigins.ToArray())
+              .AllowAnyMethod()
+              .AllowAnyHeader();
+    });
 });
 
-// Configure Serilog
-Log.Logger = new LoggerConfiguration()
-    .ReadFrom.Configuration(builder.Configuration)
-    .CreateLogger();
-builder.Host.UseSerilog();
+// Add Controllers
+builder.Services.AddControllers();
 
-// Register services
-builder.Services.AddScoped<IUnitOfWork, UnitOfWork>();
-builder.Services.AddScoped<IUserService, UserService>();
-builder.Services.AddScoped<IVehicleService, VehicleService>();
-builder.Services.AddScoped<IServiceRequestService, ServiceRequestService>();
-builder.Services.AddScoped<IServiceProviderService, ServiceProviderService>();
-builder.Services.AddScoped<IAuthService, AuthService>();
-builder.Services.AddScoped<IJwtService, JwtService>();
-
-// Register repositories
-builder.Services.AddScoped<IUserRepository, UserRepository>();
-builder.Services.AddScoped<IVehicleRepository, VehicleRepository>();
-builder.Services.AddScoped<IServiceRequestRepository, ServiceRequestRepository>();
-builder.Services.AddScoped<IServiceProviderRepository, ServiceProviderRepository>();
-
-// Register validators
-builder.Services.AddScoped<IValidator<LoginRequest>, LoginRequestValidator>();
-builder.Services.AddScoped<IValidator<RegisterRequest>, RegisterRequestValidator>();
-builder.Services.AddScoped<IValidator<ChangePasswordRequest>, ChangePasswordRequestValidator>();
-builder.Services.AddScoped<IValidator<UserDto>, UserDtoValidator>();
-builder.Services.AddScoped<IValidator<CreateUserDto>, CreateUserDtoValidator>();
-builder.Services.AddScoped<IValidator<UpdateUserDto>, UpdateUserDtoValidator>();
-builder.Services.AddScoped<IValidator<VehicleDto>, VehicleDtoValidator>();
-builder.Services.AddScoped<IValidator<CreateVehicleDto>, CreateVehicleDtoValidator>();
-builder.Services.AddScoped<IValidator<UpdateVehicleDto>, UpdateVehicleDtoValidator>();
-builder.Services.AddScoped<IValidator<ServiceRequestDto>, ServiceRequestDtoValidator>();
-builder.Services.AddScoped<IValidator<CreateServiceRequestDto>, CreateServiceRequestDtoValidator>();
-builder.Services.AddScoped<IValidator<UpdateServiceRequestDto>, UpdateServiceRequestDtoValidator>();
-builder.Services.AddScoped<IValidator<AssignServiceProviderDto>, AssignServiceProviderDtoValidator>();
-builder.Services.AddScoped<IValidator<UpdateServiceStatusDto>, UpdateServiceStatusDtoValidator>();
-builder.Services.AddScoped<IValidator<ServiceProviderDto>, ServiceProviderDtoValidator>();
-builder.Services.AddScoped<IValidator<CreateServiceProviderDto>, CreateServiceProviderDtoValidator>();
-builder.Services.AddScoped<IValidator<UpdateServiceProviderDto>, UpdateServiceProviderDtoValidator>();
-builder.Services.AddScoped<IValidator<UpdateAvailabilityDto>, UpdateAvailabilityDtoValidator>();
-
-// Add FluentValidation
-builder.Services.AddFluentValidationAutoValidation();
-builder.Services.AddValidatorsFromAssemblyContaining<LoginRequestValidator>();
-
-// Configure Swagger
+// Add Swagger (with JWT auth)
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen(c =>
 {
     c.SwaggerDoc("v1", new OpenApiInfo { Title = "FixMate API", Version = "v1" });
-    
-    // Add JWT Authentication to Swagger
     c.AddSecurityDefinition("Bearer", new OpenApiSecurityScheme
     {
         Description = "JWT Authorization header using the Bearer scheme",
@@ -122,42 +82,72 @@ builder.Services.AddSwaggerGen(c =>
         Type = SecuritySchemeType.ApiKey,
         Scheme = "Bearer"
     });
-
     c.AddSecurityRequirement(new OpenApiSecurityRequirement
     {
         {
             new OpenApiSecurityScheme
             {
-                Reference = new OpenApiReference
-                {
-                    Type = ReferenceType.SecurityScheme,
-                    Id = "Bearer"
-                }
+                Reference = new OpenApiReference { Type = ReferenceType.SecurityScheme, Id = "Bearer" }
             },
             Array.Empty<string>()
         }
     });
 });
 
+// Register Application Services
+builder.Services.AddScoped<IUnitOfWork, UnitOfWork>();
+builder.Services.AddScoped<IUserService, UserService>();
+builder.Services.AddScoped<IVehicleService, VehicleService>();
+builder.Services.AddScoped<IServiceRequestService, ServiceRequestService>();
+builder.Services.AddScoped<IServiceProviderService, ServiceProviderService>();
+builder.Services.AddScoped<IAuthService, AuthService>();
+builder.Services.AddScoped<IJwtService, JwtService>();
+
+// Register Repositories
+builder.Services.AddScoped<IUserRepository, UserRepository>();
+builder.Services.AddScoped<IVehicleRepository, VehicleRepository>();
+builder.Services.AddScoped<IServiceRequestRepository, ServiceRequestRepository>();
+builder.Services.AddScoped<IServiceProviderRepository, ServiceProviderRepository>();
+
+// Register Validators
+builder.Services.AddScoped<IValidator<LoginRequest>, LoginRequestValidator>();
+builder.Services.AddScoped<IValidator<RegisterRequest>, RegisterRequestValidator>();
+builder.Services.AddScoped<IValidator<ChangePasswordRequest>, ChangePasswordRequestValidator>();
+builder.Services.AddScoped<IValidator<UserDto>, UserDtoValidator>();
+builder.Services.AddScoped<IValidator<VehicleDto>, VehicleDtoValidator>();
+builder.Services.AddScoped<IValidator<CreateVehicleDto>, CreateVehicleDtoValidator>();
+builder.Services.AddScoped<IValidator<UpdateVehicleDto>, UpdateVehicleDtoValidator>();
+builder.Services.AddScoped<IValidator<ServiceRequestDto>, ServiceRequestDtoValidator>();
+builder.Services.AddScoped<IValidator<CreateServiceRequestDto>, CreateServiceRequestDtoValidator>();
+builder.Services.AddScoped<IValidator<UpdateServiceRequestDto>, UpdateServiceRequestDtoValidator>();
+builder.Services.AddScoped<IValidator<AssignServiceProviderDto>, AssignServiceProviderDtoValidator>();
+builder.Services.AddScoped<IValidator<ServiceProviderDto>, ServiceProviderDtoValidator>();
+builder.Services.AddScoped<IValidator<CreateServiceProviderDto>, CreateServiceProviderDtoValidator>();
+builder.Services.AddScoped<IValidator<UpdateServiceProviderDto>, UpdateServiceProviderDtoValidator>();
+builder.Services.AddScoped<IValidator<UpdateAvailabilityDto>, UpdateAvailabilityDtoValidator>();
+
+
+// Add database seeder
+builder.Services.AddScoped<DatabaseSeeder>();
+
 var app = builder.Build();
 
-// Configure the HTTP request pipeline.
+// Run Swagger in Development
 if (app.Environment.IsDevelopment())
 {
     app.UseSwagger();
     app.UseSwaggerUI();
 }
 
+// Middleware pipeline
 app.UseHttpsRedirection();
 app.UseCors("AllowSpecificOrigins");
 app.UseAuthentication();
 app.UseAuthorization();
 app.MapControllers();
-
-// Use global exception handler
 app.UseMiddleware<GlobalExceptionHandler>();
 
-// Apply database migrations and seed data
+// Apply migrations and seed
 using (var scope = app.Services.CreateScope())
 {
     var services = scope.ServiceProvider;
@@ -166,18 +156,14 @@ using (var scope = app.Services.CreateScope())
         var context = services.GetRequiredService<FixMateDbContext>();
         context.Database.Migrate();
 
-        // Seed database
         var seeder = services.GetRequiredService<DatabaseSeeder>();
         await seeder.SeedAsync();
     }
     catch (Exception ex)
     {
         var logger = services.GetRequiredService<ILogger<Program>>();
-        logger.LogError(ex, "An error occurred while migrating or seeding the database.");
+        logger.LogError(ex, "An error occurred during DB migration or seeding.");
     }
 }
-
-// Register DatabaseSeeder
-builder.Services.AddScoped<DatabaseSeeder>();
 
 app.Run();

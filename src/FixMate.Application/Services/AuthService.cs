@@ -23,6 +23,7 @@ namespace FixMate.Application.Services
     public class AuthService : IAuthService
     {
         private readonly IUserRepository _userRepository;
+        // private readonly UserRepository _userRepository -> violate Clean Arch 
         private readonly IUnitOfWork _unitOfWork;
         private readonly IConfiguration _configuration;
         private readonly ILogger<AuthService> _logger;
@@ -87,8 +88,8 @@ namespace FixMate.Application.Services
                 if (existingUser != null)
                     throw new InvalidOperationException("User with this email already exists");
 
-                // Hash the password with BCrypt
-                string passwordHash = BCrypt.Net.BCrypt.HashPassword(request.Password);
+                // Hash the password with BCrypt, AES Encryption 
+                string passwordHash = BCrypt.Net.BCrypt.HashPassword(request.Password); 
 
                 var user = new User
                 {

@@ -9,10 +9,10 @@ namespace FixMate.Application.Interfaces.Persistence
     {
         Task<User> GetByIdAsync(Guid id);
         Task<User> GetByEmailAsync(string email);
+        Task<IEnumerable<Vehicle>> GetUserVehiclesAsync(Guid userId);
         Task<IEnumerable<User>> GetAllAsync();
         Task AddAsync(User user);
         void Update(User user);
         void Delete(User user);
-        Task<IEnumerable<Vehicle>> GetUserVehiclesAsync(Guid userId);
     }
 } 

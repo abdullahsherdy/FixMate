@@ -6,7 +6,6 @@ using FixMate.Application.Interfaces.Services;
 using FixMate.Application.Interfaces.Persistence;
 using FixMate.Domain.Entities;
 using FixMate.Domain.Enums;
-using FixMate.Domain.ValueObjects;
 using FixMate.Application.DTOs;
 using Microsoft.Extensions.Logging;
 
@@ -43,7 +42,7 @@ namespace FixMate.Application.Services
                 var provider = new ServiceProvider
                 {
                     FullName = providerDto.FullName,
-                    Email = new Email(providerDto.Email),
+                    Email = providerDto.Email,
                     PhoneNumber = providerDto.PhoneNumber,
                     Specialization = providerDto.Specialization,
                     IsAvailable = true,
@@ -182,6 +181,14 @@ namespace FixMate.Application.Services
             }
         }
 
+        /// <summary>
+        ///  -> cookies -> register 
+        ///  -> Request Json -> api calling 
+        ///  Response 
+        /// </summary>
+        /// <param name="providerId"></param>
+        /// <returns></returns>
+        /// <exception cref="ArgumentException"></exception>
         public async Task<IEnumerable<ServiceRequestDto>> GetAssignedServiceRequestsAsync(Guid providerId)
         {
             if (providerId == Guid.Empty)
@@ -249,7 +256,7 @@ namespace FixMate.Application.Services
             {
                 Id = provider.Id,
                 FullName = provider.FullName ?? throw new InvalidOperationException("Service provider full name cannot be null"),
-                Email = provider.Email?.Value ?? throw new InvalidOperationException("Service provider email cannot be null"),
+                Email = provider.Email ?? throw new InvalidOperationException("Service provider email cannot be null"),
                 PhoneNumber = provider.PhoneNumber ?? throw new InvalidOperationException("Service provider phone number cannot be null"),
                 Specialization = provider.Specialization,
                 IsAvailable = provider.IsAvailable

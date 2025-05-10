@@ -41,7 +41,8 @@ namespace FixMate.Application.Services
             try
             {
                 // Verify vehicle exists
-                var vehicle = await _vehicleRepository.GetByIdAsync(requestDto.VehicleId);
+                var vehicle = await _vehicleRepository.GetByIdAsync(requestDto.VehicleId); 
+
                 if (vehicle == null)
                     throw new ArgumentException("Vehicle not found", nameof(requestDto.VehicleId));
 
@@ -54,7 +55,7 @@ namespace FixMate.Application.Services
                     RequestedAt = DateTime.UtcNow
                 };
 
-                await _serviceRequestRepository.AddAsync(request);
+                await _serviceRequestRepository.AddAsync(request); 
                 await _unitOfWork.SaveChangesAsync();
                 
                 return MapToDto(request);
@@ -122,18 +123,19 @@ namespace FixMate.Application.Services
 
         public async Task<ServiceRequestDto> UpdateServiceRequestStatusAsync(Guid id, ServiceStatus status)
         {
+            // Sql Injection -> "  " 
             if (id == Guid.Empty)
                 throw new ArgumentException("Invalid service request ID", nameof(id));
 
             try
             {
-                var request = await _serviceRequestRepository.GetByIdAsync(id);
+                var request = await _serviceRequestRepository.GetByIdAsync(id); 
                 if (request == null)
                     throw new ArgumentException("Service request not found", nameof(id));
 
                 request.Status = status;
                 if (status == ServiceStatus.Completed)
-                    request.CompletedAt = DateTime.UtcNow;
+                    request.CompletedAt = DateTime.UtcNow; 
 
                 _serviceRequestRepository.Update(request);
                 await _unitOfWork.SaveChangesAsync();
@@ -254,6 +256,8 @@ namespace FixMate.Application.Services
         {
             if (requestId == Guid.Empty)
                 throw new ArgumentException("Invalid service request ID", nameof(requestId));
+            
+            
             if (statusDto == null)
                 throw new ArgumentNullException(nameof(statusDto));
 

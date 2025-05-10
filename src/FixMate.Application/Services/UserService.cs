@@ -44,9 +44,9 @@ namespace FixMate.Application.Services
                     FullName = userDto.FullName,
                     Email = userDto.Email,
                     PhoneNumber = userDto.PhoneNumber,
+                    Role = Role.Customer,
                     CreatedAt = DateTime.UtcNow,
                     IsActive = true,
-                    UserRoles = new List<UserRole> { new UserRole { Role = userDto.Role } }
                 };
 
                 await _userRepository.AddAsync(user);
@@ -115,7 +115,7 @@ namespace FixMate.Application.Services
             }
         }
 
-        public async Task<UserDto> UpdateUserAsync(Guid id, UpdateUserDto userDto)
+        public async Task<UserDto> UpdateUserAsync(Guid id, UpdateUserRequest userDto)
         {
             if (id == Guid.Empty)
                 throw new ArgumentException("Invalid user ID", nameof(id));
@@ -180,7 +180,7 @@ namespace FixMate.Application.Services
                     Make = v.Make,
                     Model = v.Model,
                     Year = v.Year,
-                    LicensePlate = v.LicensePlate.Value,
+                    LicensePlate = v.LicensePlate,
                     OwnerId = v.OwnerId,
                     OwnerName = v.Owner?.FullName
                 });
@@ -203,7 +203,6 @@ namespace FixMate.Application.Services
                 FullName = user.FullName ?? throw new InvalidOperationException("User full name cannot be null"),
                 Email = user.Email ?? throw new InvalidOperationException("User email cannot be null"),
                 PhoneNumber = user.PhoneNumber ?? throw new InvalidOperationException("User phone number cannot be null"),
-                Role = user.UserRoles?.FirstOrDefault()?.Role ?? throw new InvalidOperationException("User must have at least one role")
             };
         }
     }

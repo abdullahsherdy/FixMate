@@ -1,9 +1,21 @@
 ﻿
 ## Vehicle Service Booking System
 - A user can create an account and book a car or bike service
+-  // AuthController (login, Register) -> AuthService 
+ -  ///  ServiceRequestService 
+  - 
 - A user can select service type and provide vehicle details
+- // ServiceRequestService-> Create '
+
+
+
+
+- 
 - A mechanic can view incoming service requests and accept or reject them
+- // ServiceRequestService -> GetAll
+- 
 - A mechanic can update the service status to show progress or completion
+- // ServiceRequestService -> Update
 
 
 
