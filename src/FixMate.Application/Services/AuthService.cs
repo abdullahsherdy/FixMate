@@ -96,7 +96,7 @@ namespace FixMate.Application.Services
                     Email = request.Email,
                     PasswordHash = passwordHash,
                     PhoneNumber = request.PhoneNumber,
-                    Role = new Role { Name= request.Role},
+                    Role = Role.Customer,
                     CreatedAt = DateTime.UtcNow,
                     IsActive = true
                 };

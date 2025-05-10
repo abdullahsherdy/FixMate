@@ -18,6 +18,13 @@ namespace FixMate.Infrastructure.Persistence.Repositories
             _context = context;
         }
 
+        public async Task<IEnumerable<ServiceProvider>> GetByOwnerIdAsync(Guid id)
+        {
+            return await _context.ServiceProviders
+                .Where(sp => sp.Id == id)
+                .ToListAsync();
+        }
+
         public async Task<ServiceProvider> GetByIdAsync(Guid id)
         {
             return await _context.ServiceProviders
@@ -28,23 +35,28 @@ namespace FixMate.Infrastructure.Persistence.Repositories
         public async Task<ServiceProvider> GetByEmailAsync(string email)
         {
             return await _context.ServiceProviders
-                .Include(sp => sp.AssignedRequests)
-                .FirstOrDefaultAsync(sp => sp.Email.Value == email);
+                .FirstOrDefaultAsync(sp => sp.Email == email);
         }
 
         public async Task<IEnumerable<ServiceProvider>> GetBySpecializationAsync(Specialization specialization)
         {
             return await _context.ServiceProviders
-                .Include(sp => sp.AssignedRequests)
                 .Where(sp => sp.Specialization == specialization)
                 .ToListAsync();
         }
 
+        public async Task<IEnumerable<ServiceRequest>> GetAssignedRequests(Guid id)
+        {
+
+            return await _context.ServiceRequests.
+                Where(sr => sr.AssignedProviderId == id).
+                ToListAsync();
+
+        }
+
         public async Task<IEnumerable<ServiceProvider>> GetAllAsync()
         {
-            return await _context.ServiceProviders
-                .Include(sp => sp.AssignedRequests)
-                .ToListAsync();
+            return await _context.ServiceProviders.ToListAsync();
         }
 
         public async Task AddAsync(ServiceProvider provider)
@@ -59,16 +71,7 @@ namespace FixMate.Infrastructure.Persistence.Repositories
 
         public void Update(ServiceProvider provider)
         {
-            _context.Entry(provider).State = EntityState.Modified;
-        }
-
-        public async Task<IEnumerable<ServiceRequest>> GetAssignedRequestsAsync(Guid providerId)
-        {
-            return await _context.ServiceRequests
-                .Include(sr => sr.Vehicle)
-                .Where(sr => sr.AssignedProviderId == providerId)
-                .OrderByDescending(sr => sr.RequestedAt)
-                .ToListAsync();
+            _context.ServiceProviders.Update(provider);
         }
     }
-} 
+}

@@ -240,29 +240,12 @@ namespace FixMate.Application.Services
 
             try
             {
-                var requests = await _serviceRequestRepository.GetByUserIdAsync(userId);
+                var requests = await _serviceRequestRepository.GetByOwnerIdAsync(userId);
                 return requests.Select(r => MapToDto(r));
             }
             catch (Exception ex)
             {
                 _logger.LogError(ex, "Error occurred while getting service requests for user {UserId}", userId);
-                throw;
-            }
-        }
-
-        public async Task<IEnumerable<ServiceRequestDto>> GetServiceRequestsByMechanicIdAsync(Guid mechanicId)
-        {
-            if (mechanicId == Guid.Empty)
-                throw new ArgumentException("Invalid mechanic ID", nameof(mechanicId));
-
-            try
-            {
-                var requests = await _serviceRequestRepository.GetByProviderIdAsync(mechanicId);
-                return requests.Select(r => MapToDto(r));
-            }
-            catch (Exception ex)
-            {
-                _logger.LogError(ex, "Error occurred while getting service requests for mechanic {MechanicId}", mechanicId);
                 throw;
             }
         }

@@ -10,6 +10,8 @@ namespace FixMate.Application.Interfaces.Persistence
         Task<ServiceRequest> GetByIdAsync(Guid id);
         Task<IEnumerable<ServiceRequest>> GetAllAsync();
         Task<IEnumerable<ServiceRequest>> GetByVehicleIdAsync(Guid vehicleId);
+        Task<IEnumerable<ServiceRequest>> GetByOwnerIdAsync(Guid vehicleId);
+
         Task<IEnumerable<ServiceRequest>> GetByProviderIdAsync(Guid providerId);
         Task AddAsync(ServiceRequest request);
         void Update(ServiceRequest request);

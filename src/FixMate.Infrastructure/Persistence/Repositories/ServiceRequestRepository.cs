@@ -74,7 +74,8 @@ namespace FixMate.Infrastructure.Persistence.Repositories
 
         public async Task<ServiceRequest> GetByIdAsync(Guid id)
         {
-            return await _context.ServiceRequests.FirstOreDefaultAsync(sr => sr.Id == id);
+            return await _context.ServiceRequests
+                .FirstOrDefaultAsync(sr => sr.Id == id);
         }
     }
 } 

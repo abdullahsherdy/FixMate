@@ -28,7 +28,7 @@ namespace FixMate.Infrastructure.Persistence.Repositories
         {
             return await _context.Users
                 .Include(u => u.Vehicles)
-                .FirstOrDefaultAsync(u => u.Email.Value == email);
+                .FirstOrDefaultAsync(u => u.Email.ToString() == email);
         }
 
         public async Task<IEnumerable<User>> GetAllAsync()
@@ -56,7 +56,7 @@ namespace FixMate.Infrastructure.Persistence.Repositories
         public async Task<IEnumerable<Vehicle>> GetUserVehiclesAsync(Guid userId)
         {
             return await _context.Vehicles
-                .Where(v => v.UserId == userId)
+                .Where(v => v.OwnerId == userId)
                 .ToListAsync();
         }
     }

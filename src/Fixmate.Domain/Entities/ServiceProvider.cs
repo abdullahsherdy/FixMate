@@ -16,12 +16,15 @@ namespace FixMate.Domain.Entities
         [Required]
         [MaxLength(100)]
         public string FullName { get; set; }
+
         public Email Email { get; set; }
         [Required]
         public string PhoneNumber { get; set; }
         [Required]
-        public Specialization Specialization { get; set; }
-        public bool IsAvailable { get; set; } = default!;
+        // As A Default Value our platform is for Mehanics 
+        public Specialization Specialization { get; set; } = Specialization.Mechanic; 
+        // Every Provider is Available by default 
+        public bool IsAvailable { get; set; } = true;
         public List<ServiceRequest> AssignedRequests { get; set; } = new List<ServiceRequest>();
     }
 

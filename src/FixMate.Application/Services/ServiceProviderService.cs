@@ -189,7 +189,8 @@ namespace FixMate.Application.Services
 
             try
             {
-                var requests = await _serviceProviderRepository.GetAssignedRequestsAsync(providerId);
+                var requests = await _serviceProviderRepository.GetAssignedRequests(providerId);
+                /// Manual Mapping 
                 return requests.Select(sr => new ServiceRequestDto
                 {
                     Id = sr.Id,

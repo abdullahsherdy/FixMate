@@ -28,7 +28,7 @@ namespace FixMate.Infrastructure.Persistence.Repositories
         {
             return await _context.Vehicles
                 .Include(v => v.Owner)
-                .Where(v => v.UserId == userId)
+                .Where(v => v.OwnerId == userId)
                 .ToListAsync();
         }
 

@@ -1,14 +1,19 @@
-using System;
+﻿using System;
 using System.Collections.Generic;
-using System.Text.Json.Serialization;
+using System.Linq;
+using System.Text;
+using System.Threading.Tasks;
 
 namespace FixMate.Domain.Entities
 {
-    public class Role
+    /// <summary>
+    ///  in fact there's no need for this, but it is a good practice to have a role enum for future enhancements 
+    /// </summary>
+
+    public enum Role
     {
-        public Guid Id { get; set; } = Guid.NewGuid();
-        public string Name { get; set; }
-        [JsonIgnore]
-        public List<UserRole> UserRoles { get; set; } = new List<UserRole>();
+        Admin, 
+        Customer
+
     }
-} 
+}

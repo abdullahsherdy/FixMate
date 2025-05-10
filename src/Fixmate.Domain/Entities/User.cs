@@ -32,7 +32,8 @@ namespace FixMate.Domain.Entities
         public string PhoneNumber { get; set; }
 
         [Required]
-        public Role Role { get; set; }
+        /// AS A Default Value 
+        public Role Role { get; set; } = Role.Customer ;
 
         [Required]
         public DateTime CreatedAt { get; set; }
@@ -41,9 +42,6 @@ namespace FixMate.Domain.Entities
 
         [Required]
         public bool IsActive { get; set; }
-
-        [JsonIgnore]
-        public List<UserRole> UserRoles { get; set; } = new List<UserRole>();
 
         public virtual ICollection<Vehicle> Vehicles { get; set; } = new List<Vehicle>();
         public virtual ICollection<ServiceRequest> ServiceRequests { get; set; } = new List<ServiceRequest>();

@@ -10,7 +10,7 @@ namespace FixMate.Application.Interfaces.Persistence
     {
         Task<IEnumerable<ServiceProvider>> GetByOwnerIdAsync(Guid id);
         Task<ServiceProvider> GetByIdAsync(Guid id);
-
+        Task<IEnumerable<ServiceRequest>> GetAssignedRequests(Guid id);
         Task<ServiceProvider> GetByEmailAsync(string email);
         Task<IEnumerable<ServiceProvider>> GetBySpecializationAsync(Specialization specialization);
         Task<IEnumerable<ServiceProvider>> GetAllAsync();
