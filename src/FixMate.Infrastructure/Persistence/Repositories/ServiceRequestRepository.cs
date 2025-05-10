@@ -22,17 +22,10 @@ namespace FixMate.Infrastructure.Persistence.Repositories
             return await _context.ServiceRequests
                 .Include(sr => sr.Vehicle)
                 .Include(sr => sr.AssignedProvider)
-                .FirstOrDefaultAsync(sr => sr.Id == id);
-        }
-
-        public async Task<IEnumerable<ServiceRequest>> GetByUserIdAsync(Guid userId)
-        {
-            return await _context.ServiceRequests
-                .Include(sr => sr.Vehicle)
-                .Include(sr => sr.AssignedProvider)
-                .Where(sr => sr.Vehicle.UserId == userId)
+                .Where(sr => sr.Vehicle.UserId == id)
                 .ToListAsync();
         }
+
 
         public async Task<IEnumerable<ServiceRequest>> GetByMechanicIdAsync(Guid mechanicId)
         {

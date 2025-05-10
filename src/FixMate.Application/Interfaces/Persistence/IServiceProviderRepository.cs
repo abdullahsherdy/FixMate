@@ -8,13 +8,12 @@ namespace FixMate.Application.Interfaces.Persistence
 {
     public interface IServiceProviderRepository
     {
-        Task<ServiceProvider> GetByIdAsync(Guid id);
+        Task<IEnumerable<ServiceProvider>> GetByIdAsync(Guid id);
         Task<ServiceProvider> GetByEmailAsync(string email);
         Task<IEnumerable<ServiceProvider>> GetBySpecializationAsync(Specialization specialization);
         Task<IEnumerable<ServiceProvider>> GetAllAsync();
         Task AddAsync(ServiceProvider provider);
         void Delete(ServiceProvider provider);
         void Update(ServiceProvider provider);
-        Task<IEnumerable<ServiceRequest>> GetAssignedRequestsAsync(Guid providerId);
     }
 } 
