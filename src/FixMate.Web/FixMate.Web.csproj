@@ -25,6 +25,7 @@
 
 	<ItemGroup>
     <ProjectReference Include="..\FixMate.Application\FixMate.Application.csproj" />
+    <ProjectReference Include="..\Fixmate.Domain\FixMate.Domain.csproj" />
     <ProjectReference Include="..\FixMate.Infrastructure\FixMate.Infrastructure.csproj" />
   </ItemGroup>
 

@@ -21,8 +21,24 @@ namespace FixMate.Web.Controllers
             _serviceProviderService = serviceProviderService;
         }
 
+        [HttpPost("login")]
+        public async Task<ActionResult<ServiceProviderDto>> Login(LoginRequest request)
+        {
+            try
+            {
+                var provider = await _serviceProviderService.LoginAsync(request.Email, request.Password);
+                if (provider == null)
+                    return Unauthorized(new { message = "Invalid email or password" });
+
+                return Ok(provider);
+            }
+            catch (Exception ex)
+            {
+                return BadRequest(new { message = ex.Message });
+            }
+        }
+
         [HttpPost]
-        [Authorize(Roles = "Admin")]
         public async Task<ActionResult<ServiceProviderDto>> CreateServiceProvider(CreateServiceProviderDto providerDto)
         {
             try
@@ -85,7 +101,6 @@ namespace FixMate.Web.Controllers
         }
 
         [HttpDelete("{id}")]
-        [Authorize(Roles = "Admin")]
         public async Task<IActionResult> Delete(Guid id)
         {
             var result = await _serviceProviderService.DeleteServiceProviderAsync(id);

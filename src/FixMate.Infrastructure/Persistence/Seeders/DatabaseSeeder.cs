@@ -1,6 +1,8 @@
 using System;
 using System.Threading.Tasks;
 using FixMate.Domain.Entities;
+using FixMate.Domain.Enums;
+
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
 using BC = BCrypt.Net.BCrypt;

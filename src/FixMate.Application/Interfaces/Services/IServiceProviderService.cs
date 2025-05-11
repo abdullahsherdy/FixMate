@@ -17,5 +17,6 @@ namespace FixMate.Application.Interfaces.Services
         Task<bool> DeleteServiceProviderAsync(Guid id);
         Task<IEnumerable<ServiceRequestDto>> GetAssignedServiceRequestsAsync(Guid providerId);
         Task<ServiceProviderDto> UpdateAvailabilityAsync(Guid id, UpdateAvailabilityDto availabilityDto);
+        Task<ServiceProviderDto> LoginAsync(string email, string password);
     }
 }

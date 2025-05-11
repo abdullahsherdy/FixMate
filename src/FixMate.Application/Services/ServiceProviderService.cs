@@ -8,6 +8,7 @@ using FixMate.Domain.Entities;
 using FixMate.Domain.Enums;
 using FixMate.Application.DTOs;
 using Microsoft.Extensions.Logging;
+using BCrypt.Net;
 
 namespace FixMate.Application.Services
 {
@@ -245,7 +246,28 @@ namespace FixMate.Application.Services
             }
         }
 
+        public async Task<ServiceProviderDto> LoginAsync(string email, string password)
+        {
+            if (string.IsNullOrEmpty(email) || string.IsNullOrEmpty(password))
+                throw new ArgumentException("Email and password cannot be null or empty");
 
+            try
+            {
+                var provider = await _serviceProviderRepository.GetByEmailAsync(email);
+                if (provider == null)
+                    return null;
+
+                if (!BCrypt.Net.BCrypt.Verify(password, provider.PasswordHash))
+                    return null;
+
+                return MapToDto(provider);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error occurred while logging in service provider with email {Email}", email);
+                throw;
+            }
+        }
 
         private static ServiceProviderDto MapToDto(ServiceProvider provider)
         {
@@ -262,8 +284,5 @@ namespace FixMate.Application.Services
                 IsAvailable = provider.IsAvailable
             };
         }
-
-
-
     }
 } 

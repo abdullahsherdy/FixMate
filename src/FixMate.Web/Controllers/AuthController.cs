@@ -19,10 +19,12 @@ namespace FixMate.Web.Controllers
     public class AuthController : ControllerBase
     {
         private readonly IAuthService _authService;
+        private readonly IServiceProviderService _serviceProvider;
         private readonly IJwtService _jwtService;
         private readonly ILogger<AuthController> _logger;
 
         public AuthController(
+            IServiceProviderService serviceProvider,
             IAuthService authService,
             IJwtService jwtService,
             ILogger<AuthController> logger)
@@ -30,11 +32,15 @@ namespace FixMate.Web.Controllers
             _authService = authService ?? throw new ArgumentNullException(nameof(authService));
             _jwtService = jwtService ?? throw new ArgumentNullException(nameof(jwtService));
             _logger = logger ?? throw new ArgumentNullException(nameof(logger));
+
+            _serviceProvider = serviceProvider ?? throw new ArgumentNullException(nameof(serviceProvider));
         }
 
         [HttpPost("login")]
         public async Task<ActionResult<AuthResponse>> Login(LoginRequest request)
         {
+            
+                 
             try
             {
                 var user = await _authService.ValidateUserAsync(request.Email, request.Password);

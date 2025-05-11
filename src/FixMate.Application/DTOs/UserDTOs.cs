@@ -1,6 +1,6 @@
 using System;
 using System.ComponentModel.DataAnnotations;
-using FixMate.Domain.Entities;
+using FixMate.Domain.Enums;
 
 namespace FixMate.Application.DTOs
 {

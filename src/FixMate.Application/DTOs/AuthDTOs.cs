@@ -1,6 +1,7 @@
 using FixMate.Domain.Enums;
 using System;
 
+using FixMate.Domain.Enums;
 namespace FixMate.Application.DTOs
 {
     public class AuthResponse
@@ -12,6 +13,8 @@ namespace FixMate.Application.DTOs
     {
         public string Email { get; set; }
         public string Password { get; set; }
+
+
     }
 
     public class RegisterRequest

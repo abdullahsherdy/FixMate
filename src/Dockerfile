@@ -12,7 +12,7 @@ ENV DOTNET_SYSTEM_GLOBALIZATION_INVARIANT=false
 # Copy the solution and project files
 COPY ["FixMate.Web/FixMate.Web.csproj", "FixMate.Web/"]
 COPY ["FixMate.Application/FixMate.Application.csproj", "FixMate.Application/"]
-COPY ["FixMate.Domain/FixMate.Domain.csproj", "FixMate.Domain/"]
+COPY ["Fixmate.Domain/FixMate.Domain.csproj", "Fixmate.Domain/"]
 COPY ["FixMate.Infrastructure/FixMate.Infrastructure.csproj", "FixMate.Infrastructure/"]
 
 # Restore NuGet packages
